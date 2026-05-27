@@ -1,1 +1,18 @@
-<Solution />
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/Application/">
+    <Project Path="src/Application/Omen.Controls.Popup.Application.csproj" />
+  </Folder>
+  <Folder Name="/src/Blazor.Fluent/">
+    <Project Path="src/Blazor.Fluent/Omen.Controls.Popup.Blazor.Fluent.csproj" />
+  </Folder>
+  <Folder Name="/src/Blazor/">
+    <Project Path="src/Blazor/Omen.Controls.Popup.Blazor.csproj" />
+  </Folder>
+  <Folder Name="/src/Core/">
+    <Project Path="src/Core/Omen.Controls.Popup.Core.csproj" />
+  </Folder>
+  <Folder Name="/src/WPF/">
+    <Project Path="src/WPF/Omen.Controls.Popup.WPF.csproj" />
+  </Folder>
+</Solution>
