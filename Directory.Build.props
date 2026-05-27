@@ -1,0 +1,16 @@
+<Project>
+  <PropertyGroup>
+    <Authors>Billy Van Rensburg</Authors>
+    <Company>Private</Company>
+    <Product>Omen.Controls.Popup</Product>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/BillyVanRensburg/Omen.Controls.Popup</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/BillyVanRensburg/Omen.Controls.Popup.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+</Project>
