@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 
 namespace Omen.Controls.Popup.Sample
@@ -14,16 +15,24 @@ namespace Omen.Controls.Popup.Sample
             this.PreviewKeyDown += (s, e) =>
             {
                 if (e.Key == Key.Escape && TestPopup.IsOpen && TestPopup.CanCloseOnEscape)
-                    TestPopup.CloseAsync();
+                    _ = TestPopup.CloseAsync();
             };
         }
 
         private async void ShowButton_Click(object sender, RoutedEventArgs e)
         {
-            // Set properties from checkboxes
+            // Apply close button settings
+            TestPopup.ShowCloseButton = ShowCloseButtonCheckBox.IsChecked == true;
+
+            if (CustomCloseButtonCheckBox.IsChecked == true)
+                TestPopup.CloseButtonTemplate = (ControlTemplate)TestPopup.FindResource("CustomCloseButtonTemplate");
+            else
+                TestPopup.CloseButtonTemplate = (ControlTemplate)TestPopup.FindResource("DefaultCloseButtonTemplate");
+
+            // Apply other settings
             TestPopup.CloseOnOverlayClick = OverlayClickCheckBox.IsChecked == true;
             TestPopup.CanCloseOnEscape = EscapeCheckBox.IsChecked == true;
-            TestPopup.Content = $"Modal popup\n\nOverlay click: {TestPopup.CloseOnOverlayClick}\nEscape: {TestPopup.CanCloseOnEscape}";
+            TestPopup.Content = $"Modal popup\n\nOverlay click: {TestPopup.CloseOnOverlayClick}\nEscape: {TestPopup.CanCloseOnEscape}\nClose button: {(TestPopup.ShowCloseButton ? "visible" : "hidden")}";
 
             bool useAsync = AsyncCheckBox.IsChecked == true;
             StatusText.Text = "Showing popup... (using " + (useAsync ? "async/await" : "fire-and-forget") + ")";
@@ -35,7 +44,6 @@ namespace Omen.Controls.Popup.Sample
             }
             else
             {
-                // Fire-and-forget
                 _ = TestPopup.ShowAsync().ContinueWith(t =>
                 {
                     if (t.IsFaulted)
