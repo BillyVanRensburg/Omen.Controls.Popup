@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Threading;
 
 namespace Omen.Controls.Popup.WPF.Controls
 {
@@ -47,11 +48,31 @@ namespace Omen.Controls.Popup.WPF.Controls
             set => SetValue(CanCloseOnEscapeProperty, value);
         }
 
+        public static readonly DependencyProperty CloseOnOverlayClickProperty =
+            DependencyProperty.Register(nameof(CloseOnOverlayClick), typeof(bool), typeof(OmenPopup), new PropertyMetadata(true));
+
+        public bool CloseOnOverlayClick
+        {
+            get => (bool)GetValue(CloseOnOverlayClickProperty);
+            set => SetValue(CloseOnOverlayClickProperty, value);
+        }
+
         #endregion
+
+        public event EventHandler? Closed;
 
         public OmenPopup()
         {
             InitializeComponent();
+            OverlayGrid.MouseLeftButtonDown += OverlayGrid_MouseLeftButtonDown;
+        }
+
+        private void OverlayGrid_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (IsOpen && CloseOnOverlayClick)
+            {
+                _ = CloseAsync();
+            }
         }
 
         public async Task ShowAsync()
@@ -59,16 +80,27 @@ namespace Omen.Controls.Popup.WPF.Controls
             if (IsOpen) return;
             OverlayGrid.Visibility = Visibility.Visible;
             IsOpen = true;
-            Focusable = true;
-            Focus(); // take focus to capture keyboard events
-            await Task.CompletedTask;
+            // Force focus after a short delay to ensure the visual tree is ready
+            await Dispatcher.InvokeAsync(() => Focus(), DispatcherPriority.Input);
         }
+
+
+        //public async Task ShowAsync()
+        //{
+        //    if (IsOpen) return;
+        //    OverlayGrid.Visibility = Visibility.Visible;
+        //    IsOpen = true;
+        //    Focusable = true;
+        //    Focus();
+        //    await Task.CompletedTask;
+        //}
 
         public async Task CloseAsync()
         {
             if (!IsOpen) return;
             OverlayGrid.Visibility = Visibility.Collapsed;
             IsOpen = false;
+            Closed?.Invoke(this, EventArgs.Empty);
             await Task.CompletedTask;
         }
 
