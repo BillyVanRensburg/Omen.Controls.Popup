@@ -1,10 +1,16 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
     <ImplicitUsings>enable</ImplicitUsings>
+	  
   </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Core\Omen.Controls.Popup.Core.csproj" />
+	<ProjectReference Include="..\Application\Omen.Controls.Popup.Application.csproj" />
+  </ItemGroup>
 
 </Project>

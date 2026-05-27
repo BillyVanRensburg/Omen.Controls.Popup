@@ -1,4 +1,8 @@
 <Solution>
+  <Folder Name="/samples/" />
+  <Folder Name="/samples/WPF/">
+    <Project Path="samples/WPF/Omen.Controls.Popup.Sample.csproj" />
+  </Folder>
   <Folder Name="/src/" />
   <Folder Name="/src/Application/">
     <Project Path="src/Application/Omen.Controls.Popup.Application.csproj" />
