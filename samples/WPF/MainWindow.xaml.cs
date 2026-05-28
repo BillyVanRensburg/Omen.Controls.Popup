@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using Omen.Controls.Popup.WPF.Controls;
 using CoreEnums = Omen.Controls.Popup.Core.Enums;
 
@@ -15,6 +16,7 @@ namespace Omen.Controls.Popup.Sample
             InitializeComponent();
 
             ModalAnchorTargetCombo.SelectionChanged += ModalAnchorTargetCombo_SelectionChanged;
+            OverlayBrushCombo.SelectionChanged += OverlayBrushCombo_SelectionChanged;
 
             if (TestPopup != null)
                 TestPopup.Closed += (s, e) => StatusText.Text = "Popup closed at " + DateTime.Now.ToLongTimeString();
@@ -24,6 +26,12 @@ namespace Omen.Controls.Popup.Sample
                 if (e.Key == Key.Escape && TestPopup != null && TestPopup.IsOpen && TestPopup.CanCloseOnEscape)
                     _ = TestPopup.CloseAsync();
             };
+        }
+
+        private void OverlayBrushCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var tag = ((ComboBoxItem)OverlayBrushCombo.SelectedItem)?.Tag as string;
+            CustomOverlayPanel.Visibility = (tag == "Custom") ? Visibility.Visible : Visibility.Collapsed;
         }
 
         private void ModalAnchorTargetCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -47,10 +55,8 @@ namespace Omen.Controls.Popup.Sample
                 bool isModal = ModalRadio.IsChecked == true;
                 TestPopup.IsModal = isModal;
 
-                // Lightweight anchor
                 TestPopup.AnchorElement = (AnchorToButtonRadio?.IsChecked == true) ? ShowButton : null;
 
-                // Stay open
                 bool stayOpenOutside = StayOpenOutsideCheckBox?.IsChecked == true;
                 if (isModal)
                     TestPopup.CloseOnOverlayClick = !stayOpenOutside;
@@ -59,7 +65,6 @@ namespace Omen.Controls.Popup.Sample
 
                 TestPopup.CanCloseOnEscape = EscapeCheckBox?.IsChecked == true;
 
-                // Close button
                 TestPopup.ShowCloseButton = ShowCloseButtonCheckBox?.IsChecked == true;
                 if (CustomCloseButtonCheckBox?.IsChecked == true)
                 {
@@ -71,7 +76,20 @@ namespace Omen.Controls.Popup.Sample
                     TestPopup.CloseButtonTemplate = null;
                 }
 
-                // Animations
+                // Overlay Brush (NEW #8)
+                var selectedOverlay = ((ComboBoxItem)OverlayBrushCombo.SelectedItem)?.Tag as string;
+                if (selectedOverlay == "Custom")
+                    TestPopup.OverlayBrush = (Brush)new BrushConverter().ConvertFromString(CustomOverlayBrushBox.Text);
+                else
+                    TestPopup.OverlayBrush = (Brush)new BrushConverter().ConvertFromString(selectedOverlay ?? "#80000000");
+
+                // Lightweight positioning (NEW #9)
+                string lwAlignTag = ((ComboBoxItem)LightweightAlignmentCombo.SelectedItem)?.Tag as string ?? "BottomCenter";
+                TestPopup.LightweightAlignment = ParseAlignment(lwAlignTag);
+                TestPopup.LightweightOffsetX = int.TryParse(LightweightOffsetXBox.Text, out int lx) ? lx : 5;
+                TestPopup.LightweightOffsetY = int.TryParse(LightweightOffsetYBox.Text, out int ly) ? ly : 5;
+
+                // Animation settings
                 string enterTag = (EnterAnimationCombo?.SelectedItem as ComboBoxItem)?.Tag as string ?? "None";
                 string exitTag = (ExitAnimationCombo?.SelectedItem as ComboBoxItem)?.Tag as string ?? "None";
                 TestPopup.EnterAnimation = ParseAnimation(enterTag);
@@ -85,7 +103,7 @@ namespace Omen.Controls.Popup.Sample
                 TestPopup.EnterEasing = ParseEasing(easingTag);
                 TestPopup.ExitEasing = ParseEasing(easingTag);
 
-                // Modal positioning
+                // Modal positioning (kept from earlier, but not used in current modal implementation)
                 if (isModal)
                 {
                     string anchorTag = ((ComboBoxItem)ModalAnchorTargetCombo.SelectedItem)?.Tag as string ?? "ParentWindowCenter";
@@ -184,7 +202,7 @@ namespace Omen.Controls.Popup.Sample
                     "SlideFromBottom" => AnimationType.SlideFromBottom,
                     "SlideFromLeft" => AnimationType.SlideFromLeft,
                     "SlideFromRight" => AnimationType.SlideFromRight,
-                    _ => AnimationType.None
+                    _ => AnimationType.None,
                 };
             }
             return result;
@@ -198,7 +216,7 @@ namespace Omen.Controls.Popup.Sample
                 "EaseIn" => EasingType.EaseIn,
                 "EaseOut" => EasingType.EaseOut,
                 "EaseInOut" => EasingType.EaseInOut,
-                _ => EasingType.Linear
+                _ => EasingType.Linear,
             };
         }
 
@@ -211,7 +229,7 @@ namespace Omen.Controls.Popup.Sample
                 "MouseCursor" => CoreEnums.AnchorTarget.MouseCursor,
                 "ScreenEdge" => CoreEnums.AnchorTarget.ScreenEdge,
                 "CustomCoordinates" => CoreEnums.AnchorTarget.CustomCoordinates,
-                _ => CoreEnums.AnchorTarget.ParentWindowCenter
+                _ => CoreEnums.AnchorTarget.ParentWindowCenter,
             };
         }
 
@@ -228,7 +246,7 @@ namespace Omen.Controls.Popup.Sample
                 "BottomLeft" => CoreEnums.PopupAlignment.BottomLeft,
                 "BottomCenter" => CoreEnums.PopupAlignment.BottomCenter,
                 "BottomRight" => CoreEnums.PopupAlignment.BottomRight,
-                _ => CoreEnums.PopupAlignment.Center
+                _ => CoreEnums.PopupAlignment.Center,
             };
         }
 
@@ -240,7 +258,7 @@ namespace Omen.Controls.Popup.Sample
                 "Bottom" => CoreEnums.ScreenEdge.Bottom,
                 "Left" => CoreEnums.ScreenEdge.Left,
                 "Right" => CoreEnums.ScreenEdge.Right,
-                _ => CoreEnums.ScreenEdge.Top
+                _ => CoreEnums.ScreenEdge.Top,
             };
         }
     }

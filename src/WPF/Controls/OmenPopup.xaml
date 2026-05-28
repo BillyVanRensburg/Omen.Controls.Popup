@@ -39,7 +39,7 @@
     </UserControl.Resources>
 
     <Grid x:Name="OverlayGrid" 
-          Background="#80000000" 
+          Background="{Binding OverlayBrush, ElementName=Root, FallbackValue=#80000000}" 
           Visibility="Collapsed"
           HorizontalAlignment="Stretch"
           VerticalAlignment="Stretch">

@@ -33,7 +33,7 @@
                         </StackPanel>
                     </GroupBox>
 
-                    <!-- Lightweight Options -->
+                    <!-- Lightweight Options (anchor only) -->
                     <GroupBox Header="Lightweight Options" Margin="0,5">
                         <StackPanel Margin="5">
                             <RadioButton x:Name="AnchorToButtonRadio" Content="Anchor to 'Show Popup' button" GroupName="Anchor" IsChecked="True" Margin="0,3"/>
@@ -58,11 +58,26 @@
                         </StackPanel>
                     </GroupBox>
 
-                    <!-- Modal Positioning -->
+                    <!-- Overlay Brush (Modal) – NEW for #8 -->
+                    <GroupBox Header="Overlay Brush (Modal)" Margin="0,5">
+                        <StackPanel Margin="5">
+                            <ComboBox x:Name="OverlayBrushCombo" Width="150" SelectedIndex="0">
+                                <ComboBoxItem Content="Black 50%" Tag="#80000000"/>
+                                <ComboBoxItem Content="Black 70%" Tag="#B3000000"/>
+                                <ComboBoxItem Content="White 50%" Tag="#80FFFFFF"/>
+                                <ComboBoxItem Content="Custom" Tag="Custom"/>
+                            </ComboBox>
+                            <StackPanel x:Name="CustomOverlayPanel" Visibility="Collapsed" Margin="0,5,0,0">
+                                <TextBox x:Name="CustomOverlayBrushBox" Text="#80000000" Width="100"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </GroupBox>
+
+                    <!-- Modal Positioning (already there, kept as is) -->
                     <GroupBox Header="Modal Positioning" Margin="0,5">
                         <StackPanel Margin="5">
                             <TextBlock Text="Anchor Target:" Margin="0,5,0,0"/>
-                            <ComboBox x:Name="ModalAnchorTargetCombo" Width="150" SelectedIndex="0" Margin="0,3">
+                            <ComboBox x:Name="ModalAnchorTargetCombo" Width="150" SelectedIndex="0">
                                 <ComboBoxItem Content="Parent Window Center" Tag="ParentWindowCenter"/>
                                 <ComboBoxItem Content="UI Element" Tag="UiElement"/>
                                 <ComboBoxItem Content="Mouse Cursor" Tag="MouseCursor"/>
@@ -70,18 +85,16 @@
                                 <ComboBoxItem Content="Custom Coordinates" Tag="CustomCoordinates"/>
                             </ComboBox>
 
-                            <!-- UI Element picker -->
                             <StackPanel x:Name="ModalAnchorElementPanel" Visibility="Collapsed">
                                 <TextBlock Text="Anchor Element:" Margin="0,5,0,0"/>
-                                <ComboBox x:Name="ModalAnchorElementCombo" Width="150" Margin="0,3">
+                                <ComboBox x:Name="ModalAnchorElementCombo" Width="150">
                                     <ComboBoxItem Content="Show Button" Tag="{Binding ElementName=ShowButton}"/>
                                 </ComboBox>
                             </StackPanel>
 
-                            <!-- Screen edge picker -->
                             <StackPanel x:Name="ModalScreenEdgePanel" Visibility="Collapsed">
                                 <TextBlock Text="Screen Edge:" Margin="0,5,0,0"/>
-                                <ComboBox x:Name="ModalScreenEdgeCombo" Width="120" SelectedIndex="0" Margin="0,3">
+                                <ComboBox x:Name="ModalScreenEdgeCombo" Width="120" SelectedIndex="0">
                                     <ComboBoxItem Content="Top" Tag="Top"/>
                                     <ComboBoxItem Content="Bottom" Tag="Bottom"/>
                                     <ComboBoxItem Content="Left" Tag="Left"/>
@@ -89,7 +102,6 @@
                                 </ComboBox>
                             </StackPanel>
 
-                            <!-- Custom coordinates -->
                             <StackPanel x:Name="ModalCustomCoordsPanel" Visibility="Collapsed">
                                 <TextBlock Text="Custom X,Y:" Margin="0,5,0,0"/>
                                 <StackPanel Orientation="Horizontal">
@@ -99,7 +111,7 @@
                             </StackPanel>
 
                             <TextBlock Text="Alignment:" Margin="0,8,0,0"/>
-                            <ComboBox x:Name="ModalAlignmentCombo" Width="120" SelectedIndex="4" Margin="0,3">
+                            <ComboBox x:Name="ModalAlignmentCombo" Width="120" SelectedIndex="4">
                                 <ComboBoxItem Content="Top Left" Tag="TopLeft"/>
                                 <ComboBoxItem Content="Top Center" Tag="TopCenter"/>
                                 <ComboBoxItem Content="Top Right" Tag="TopRight"/>
@@ -124,6 +136,29 @@
 
                 <!-- Column 2 -->
                 <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                    <!-- Lightweight Positioning – NEW for #9 -->
+                    <GroupBox Header="Lightweight Positioning" Margin="0,5">
+                        <StackPanel Margin="5">
+                            <TextBlock Text="Alignment (when anchored to button):" Margin="0,5,0,0"/>
+                            <ComboBox x:Name="LightweightAlignmentCombo" Width="120" SelectedIndex="4">
+                                <ComboBoxItem Content="Top Left" Tag="TopLeft"/>
+                                <ComboBoxItem Content="Top Center" Tag="TopCenter"/>
+                                <ComboBoxItem Content="Top Right" Tag="TopRight"/>
+                                <ComboBoxItem Content="Left Center" Tag="LeftCenter"/>
+                                <ComboBoxItem Content="Center" Tag="Center"/>
+                                <ComboBoxItem Content="Right Center" Tag="RightCenter"/>
+                                <ComboBoxItem Content="Bottom Left" Tag="BottomLeft"/>
+                                <ComboBoxItem Content="Bottom Center" Tag="BottomCenter"/>
+                                <ComboBoxItem Content="Bottom Right" Tag="BottomRight"/>
+                            </ComboBox>
+                            <TextBlock Text="Offset (X,Y):" Margin="0,5,0,0"/>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBox x:Name="LightweightOffsetXBox" Text="5" Width="50" Margin="0,0,5,0"/>
+                                <TextBox x:Name="LightweightOffsetYBox" Text="5" Width="50"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </GroupBox>
+
                     <!-- Animation Settings -->
                     <GroupBox Header="Animation Settings" Margin="0,5">
                         <StackPanel Margin="5">
@@ -189,6 +224,7 @@
             <Button x:Name="CloseButton" Content="Force Close" Click="CloseButton_Click" Width="120" Height="30" Margin="5"/>
         </StackPanel>
 
+        <!-- OmenPopup control -->
         <omen:OmenPopup x:Name="TestPopup" />
     </Grid>
 </Window>

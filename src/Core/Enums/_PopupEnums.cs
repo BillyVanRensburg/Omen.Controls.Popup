@@ -1,20 +1,5 @@
 ﻿namespace Omen.Controls.Popup.Core.Enums;
 
-/// <summary>What the popup anchors to.</summary>
-public enum AnchorTarget
-{
-    /// <summary>A specific UI element (passed as object).</summary>
-    UiElement,
-    /// <summary>Current mouse cursor position.</summary>
-    MouseCursor,
-    /// <summary>Screen edge (top, bottom, left, or right).</summary>
-    ScreenEdge,
-    /// <summary>Center of the parent window.</summary>
-    ParentWindowCenter,
-    /// <summary>Absolute X/Y coordinates (provided separately).</summary>
-    CustomCoordinates
-}
-
 /// <summary>Alignment of the popup relative to the anchor point.</summary>
 public enum PopupAlignment
 {

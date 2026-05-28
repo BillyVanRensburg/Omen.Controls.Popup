@@ -296,6 +296,13 @@ namespace Omen.Controls.Popup.WPF.Controls
                 await ShowLightweightAsync();
         }
 
+        private CoreRect GetParentWindowBounds()
+        {
+            var window = Window.GetWindow(this);
+            if (window == null) return GetScreenBounds(); // fallback to screen
+            return new CoreRect(window.Left, window.Top, window.ActualWidth, window.ActualHeight);
+        }
+
         // ------------------------------------------------------------
         // Modal with positioning (mouse cursor fixed)
         // ------------------------------------------------------------
@@ -422,7 +429,8 @@ namespace Omen.Controls.Popup.WPF.Controls
                     CustomY = ModalAnchorTarget == CoreEnums.AnchorTarget.CustomCoordinates ? ModalCustomY : null
                 };
 
-                var finalPos = PositionCalculator.CalculatePosition(request, anchorRect, popupSize, screenBounds);
+                var bounds = (ModalAnchorTarget == CoreEnums.AnchorTarget.ParentWindowCenter) ? GetParentWindowBounds() : screenBounds;
+                var finalPos = PositionCalculator.CalculatePosition(request, anchorRect, popupSize, bounds);
                 ModalContentBorder.Margin = new Thickness(finalPos.X, finalPos.Y, 0, 0);
             }
 
@@ -549,10 +557,10 @@ namespace Omen.Controls.Popup.WPF.Controls
 
             var request = new PopupRequest
             {
-                AnchorTarget = AnchorElement != null ? CoreEnums.AnchorTarget.UiElement : CoreEnums.AnchorTarget.MouseCursor,
-                Alignment = CoreEnums.PopupAlignment.BottomCenter,
-                Offset = (5, 5),
-                AutoFlip = true
+                AnchorTarget = CoreEnums.AnchorTarget.UiElement,
+                Alignment = LightweightAlignment,                  // instead of hardcoded BottomCenter
+                Offset = (LightweightOffsetX, LightweightOffsetY), // instead of (5,5)
+                AutoFlip = true,
             };
 
             var position = PositionCalculator.CalculatePosition(request, coreAnchorRect, corePopupSize, screenBounds);
@@ -835,6 +843,38 @@ namespace Omen.Controls.Popup.WPF.Controls
                 e.Handled = true;
             }
             base.OnPreviewKeyDown(e);
+        }
+
+        public static readonly DependencyProperty OverlayBrushProperty = DependencyProperty.Register(nameof(OverlayBrush), typeof(Brush), typeof(OmenPopup), new PropertyMetadata(Brushes.Transparent));
+
+        public Brush OverlayBrush
+        {
+            get => (Brush)GetValue(OverlayBrushProperty);
+            set => SetValue(OverlayBrushProperty, value);
+        }
+
+        public static readonly DependencyProperty LightweightAlignmentProperty =
+    DependencyProperty.Register(nameof(LightweightAlignment), typeof(CoreEnums.PopupAlignment), typeof(OmenPopup), new PropertyMetadata(CoreEnums.PopupAlignment.BottomCenter));
+        public CoreEnums.PopupAlignment LightweightAlignment
+        {
+            get => (CoreEnums.PopupAlignment)GetValue(LightweightAlignmentProperty);
+            set => SetValue(LightweightAlignmentProperty, value);
+        }
+
+        public static readonly DependencyProperty LightweightOffsetXProperty =
+            DependencyProperty.Register(nameof(LightweightOffsetX), typeof(int), typeof(OmenPopup), new PropertyMetadata(5));
+        public int LightweightOffsetX
+        {
+            get => (int)GetValue(LightweightOffsetXProperty);
+            set => SetValue(LightweightOffsetXProperty, value);
+        }
+
+        public static readonly DependencyProperty LightweightOffsetYProperty =
+            DependencyProperty.Register(nameof(LightweightOffsetY), typeof(int), typeof(OmenPopup), new PropertyMetadata(5));
+        public int LightweightOffsetY
+        {
+            get => (int)GetValue(LightweightOffsetYProperty);
+            set => SetValue(LightweightOffsetYProperty, value);
         }
     }
 }
