@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using Omen.Controls.Popup.WPF.Controls;  // <-- ADD THIS
+using Omen.Controls.Popup.WPF.Controls;
 
 namespace Omen.Controls.Popup.Sample
 {
@@ -12,73 +12,129 @@ namespace Omen.Controls.Popup.Sample
         public MainWindow()
         {
             InitializeComponent();
-            TestPopup.Closed += (s, e) => StatusText.Text = "Popup closed at " + DateTime.Now.ToLongTimeString();
+
+            if (TestPopup != null)
+                TestPopup.Closed += (s, e) => StatusText.Text = "Popup closed at " + DateTime.Now.ToLongTimeString();
+
             this.PreviewKeyDown += (s, e) =>
             {
-                if (e.Key == Key.Escape && TestPopup.IsOpen && TestPopup.CanCloseOnEscape)
+                if (e.Key == Key.Escape && TestPopup != null && TestPopup.IsOpen && TestPopup.CanCloseOnEscape)
                     _ = TestPopup.CloseAsync();
             };
         }
 
         private async void ShowButton_Click(object sender, RoutedEventArgs e)
         {
-            // Apply close button settings
-            TestPopup.ShowCloseButton = ShowCloseButtonCheckBox.IsChecked == true;
-            if (CustomCloseButtonCheckBox.IsChecked == true)
-                TestPopup.CloseButtonTemplate = (ControlTemplate)TestPopup.FindResource("CustomCloseButtonTemplate");
-            else
-                TestPopup.CloseButtonTemplate = (ControlTemplate)TestPopup.FindResource("DefaultCloseButtonTemplate");
-
-            // Apply animation settings
-            TestPopup.EnterAnimation = ParseAnimation(((ComboBoxItem)EnterAnimationCombo.SelectedItem).Tag.ToString());
-            TestPopup.ExitAnimation = ParseAnimation(((ComboBoxItem)ExitAnimationCombo.SelectedItem).Tag.ToString());
-            TestPopup.EnterDuration = (int)DurationSlider.Value;
-            TestPopup.ExitDuration = (int)DurationSlider.Value;
-            TestPopup.EnterEasing = ParseEasing(((ComboBoxItem)EasingCombo.SelectedItem).Tag.ToString());
-            TestPopup.ExitEasing = ParseEasing(((ComboBoxItem)EasingCombo.SelectedItem).Tag.ToString());
-
-            // Apply other settings
-            TestPopup.CloseOnOverlayClick = OverlayClickCheckBox.IsChecked == true;
-            TestPopup.CanCloseOnEscape = EscapeCheckBox.IsChecked == true;
-            TestPopup.Content = $"Modal popup\n\n" +
-                $"Overlay click: {TestPopup.CloseOnOverlayClick}\n" +
-                $"Escape: {TestPopup.CanCloseOnEscape}\n" +
-                $"Enter: {TestPopup.EnterAnimation}\n" +
-                $"Exit: {TestPopup.ExitAnimation}\n" +
-                $"Duration: {TestPopup.EnterDuration}ms";
-
-            bool useAsync = AsyncCheckBox.IsChecked == true;
-            StatusText.Text = "Showing popup... (using " + (useAsync ? "async/await" : "fire-and-forget") + ")";
-
-            if (useAsync)
+            try
             {
-                await TestPopup.ShowAsync();
-                StatusText.Text = "Popup closed (after await) at " + DateTime.Now.ToLongTimeString();
-            }
-            else
-            {
-                _ = TestPopup.ShowAsync().ContinueWith(t =>
+                if (TestPopup == null)
                 {
-                    if (t.IsFaulted)
-                        Debug.WriteLine($"Error: {t.Exception?.Message}");
-                });
-                StatusText.Text = "Popup shown (fire-and-forget). Will close when user action occurs.";
+                    StatusText.Text = "TestPopup reference is null.";
+                    return;
+                }
+
+                // Mode
+                bool isModal = ModalRadio.IsChecked == true;
+                TestPopup.IsModal = isModal;
+
+                // Lightweight anchor
+                TestPopup.AnchorElement = (AnchorToButtonRadio?.IsChecked == true) ? ShowButton : null;
+
+                // Unified "Stay open on outside click"
+                bool stayOpenOutside = StayOpenOutsideCheckBox?.IsChecked == true;
+                if (isModal)
+                {
+                    // Modal: "stay open" means overlay click does NOT close; otherwise it does close.
+                    TestPopup.CloseOnOverlayClick = !stayOpenOutside;
+                    // For modal, StaysOpenOnOutsideClick is not used (only lightweight uses it).
+                }
+                else
+                {
+                    // Lightweight: "stay open" directly controls the popup's StaysOpen property.
+                    TestPopup.StaysOpenOnOutsideClick = stayOpenOutside;
+                }
+
+                // Escape key
+                TestPopup.CanCloseOnEscape = EscapeCheckBox?.IsChecked == true;
+
+                // Close button settings
+                TestPopup.ShowCloseButton = ShowCloseButtonCheckBox?.IsChecked == true;
+                if (CustomCloseButtonCheckBox?.IsChecked == true)
+                {
+                    var template = this.TryFindResource("CustomCloseButtonTemplate") as ControlTemplate;
+                    TestPopup.CloseButtonTemplate = template;
+                }
+                else
+                {
+                    TestPopup.CloseButtonTemplate = null;
+                }
+
+                // Animation settings
+                string enterTag = (EnterAnimationCombo?.SelectedItem as ComboBoxItem)?.Tag as string ?? "None";
+                string exitTag = (ExitAnimationCombo?.SelectedItem as ComboBoxItem)?.Tag as string ?? "None";
+                TestPopup.EnterAnimation = ParseAnimation(enterTag);
+                TestPopup.ExitAnimation = ParseAnimation(exitTag);
+
+                int duration = (int)Math.Round(DurationSlider?.Value ?? 200);
+                TestPopup.EnterDuration = duration;
+                TestPopup.ExitDuration = duration;
+
+                string easingTag = (EasingCombo?.SelectedItem as ComboBoxItem)?.Tag as string ?? "Linear";
+                TestPopup.EnterEasing = ParseEasing(easingTag);
+                TestPopup.ExitEasing = ParseEasing(easingTag);
+
+                // Content
+                if (DialogContentRadio?.IsChecked == true)
+                    TestPopup.Content = new DialogContent();
+                else
+                    TestPopup.Content = TextContentBox?.Text ?? string.Empty;
+
+                // Async mode
+                bool useAsync = AsyncCheckBox?.IsChecked == true;
+                StatusText.Text = "Showing popup... (using " + (useAsync ? "async/await" : "fire-and-forget") + ")";
+
+                if (useAsync)
+                {
+                    await TestPopup.ShowAsync();
+                    StatusText.Text = "Popup closed (after await) at " + DateTime.Now.ToLongTimeString();
+                }
+                else
+                {
+                    _ = TestPopup.ShowAsync().ContinueWith(t =>
+                    {
+                        if (t.IsFaulted)
+                        {
+                            var msg = t.Exception?.Flatten().InnerException?.Message ?? t.Exception?.Message ?? "Unknown error";
+                            Debug.WriteLine($"Error (fire-and-forget): {msg}");
+                            Dispatcher.Invoke(() => StatusText.Text = "Popup show failed (fire-and-forget).");
+                        }
+                    });
+                    StatusText.Text = "Popup shown (fire-and-forget). Will close when user action occurs.";
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("ShowButton_Click failed: " + ex);
+                MessageBox.Show("Error preparing popup: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e)
         {
+            if (TestPopup == null) return;
             _ = TestPopup.CloseAsync();
             StatusText.Text = "Force close requested.";
         }
 
         private AnimationType ParseAnimation(string tag)
         {
-            var parts = tag.Split(',');
+            if (string.IsNullOrWhiteSpace(tag)) return AnimationType.None;
+            var parts = tag.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
             AnimationType result = AnimationType.None;
-            foreach (var part in parts)
+            foreach (var raw in parts)
             {
-                result |= part.Trim() switch
+                var part = raw.Trim();
+                result |= part switch
                 {
                     "Fade" => AnimationType.Fade,
                     "Scale" => AnimationType.Scale,
@@ -94,6 +150,7 @@ namespace Omen.Controls.Popup.Sample
 
         private EasingType ParseEasing(string tag)
         {
+            if (string.IsNullOrWhiteSpace(tag)) return EasingType.Linear;
             return tag switch
             {
                 "Linear" => EasingType.Linear,
