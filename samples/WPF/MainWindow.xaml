@@ -58,7 +58,7 @@
                         </StackPanel>
                     </GroupBox>
 
-                    <!-- Overlay Brush (Modal) – NEW for #8 -->
+                    <!-- Overlay Brush (Modal) -->
                     <GroupBox Header="Overlay Brush (Modal)" Margin="0,5">
                         <StackPanel Margin="5">
                             <ComboBox x:Name="OverlayBrushCombo" Width="150" SelectedIndex="0">
@@ -73,18 +73,18 @@
                         </StackPanel>
                     </GroupBox>
 
-                    <!-- Modal Positioning (already there, kept as is) -->
+                    <!-- Modal Positioning (updated) -->
                     <GroupBox Header="Modal Positioning" Margin="0,5">
                         <StackPanel Margin="5">
                             <TextBlock Text="Anchor Target:" Margin="0,5,0,0"/>
                             <ComboBox x:Name="ModalAnchorTargetCombo" Width="150" SelectedIndex="0">
-                                <ComboBoxItem Content="Parent Window Center" Tag="ParentWindowCenter"/>
+                                <ComboBoxItem Content="Parent Container" Tag="ParentContainer"/>
                                 <ComboBoxItem Content="UI Element" Tag="UiElement"/>
                                 <ComboBoxItem Content="Mouse Cursor" Tag="MouseCursor"/>
-                                <ComboBoxItem Content="Screen Edge" Tag="ScreenEdge"/>
                                 <ComboBoxItem Content="Custom Coordinates" Tag="CustomCoordinates"/>
                             </ComboBox>
 
+                            <!-- UI Element picker -->
                             <StackPanel x:Name="ModalAnchorElementPanel" Visibility="Collapsed">
                                 <TextBlock Text="Anchor Element:" Margin="0,5,0,0"/>
                                 <ComboBox x:Name="ModalAnchorElementCombo" Width="150">
@@ -92,16 +92,7 @@
                                 </ComboBox>
                             </StackPanel>
 
-                            <StackPanel x:Name="ModalScreenEdgePanel" Visibility="Collapsed">
-                                <TextBlock Text="Screen Edge:" Margin="0,5,0,0"/>
-                                <ComboBox x:Name="ModalScreenEdgeCombo" Width="120" SelectedIndex="0">
-                                    <ComboBoxItem Content="Top" Tag="Top"/>
-                                    <ComboBoxItem Content="Bottom" Tag="Bottom"/>
-                                    <ComboBoxItem Content="Left" Tag="Left"/>
-                                    <ComboBoxItem Content="Right" Tag="Right"/>
-                                </ComboBox>
-                            </StackPanel>
-
+                            <!-- Custom coordinates panel -->
                             <StackPanel x:Name="ModalCustomCoordsPanel" Visibility="Collapsed">
                                 <TextBlock Text="Custom X,Y:" Margin="0,5,0,0"/>
                                 <StackPanel Orientation="Horizontal">
@@ -116,7 +107,7 @@
                                 <ComboBoxItem Content="Top Center" Tag="TopCenter"/>
                                 <ComboBoxItem Content="Top Right" Tag="TopRight"/>
                                 <ComboBoxItem Content="Left Center" Tag="LeftCenter"/>
-                                <ComboBoxItem Content="Center" Tag="Center"/>
+                                <ComboBoxItem Content="Middle Center" Tag="MiddleCenter"/>
                                 <ComboBoxItem Content="Right Center" Tag="RightCenter"/>
                                 <ComboBoxItem Content="Bottom Left" Tag="BottomLeft"/>
                                 <ComboBoxItem Content="Bottom Center" Tag="BottomCenter"/>
@@ -136,7 +127,7 @@
 
                 <!-- Column 2 -->
                 <StackPanel Grid.Column="1" Margin="10,0,0,0">
-                    <!-- Lightweight Positioning – NEW for #9 -->
+                    <!-- Lightweight Positioning -->
                     <GroupBox Header="Lightweight Positioning" Margin="0,5">
                         <StackPanel Margin="5">
                             <TextBlock Text="Alignment (when anchored to button):" Margin="0,5,0,0"/>
@@ -145,7 +136,7 @@
                                 <ComboBoxItem Content="Top Center" Tag="TopCenter"/>
                                 <ComboBoxItem Content="Top Right" Tag="TopRight"/>
                                 <ComboBoxItem Content="Left Center" Tag="LeftCenter"/>
-                                <ComboBoxItem Content="Center" Tag="Center"/>
+                                <ComboBoxItem Content="Middle Center" Tag="MiddleCenter"/>
                                 <ComboBoxItem Content="Right Center" Tag="RightCenter"/>
                                 <ComboBoxItem Content="Bottom Left" Tag="BottomLeft"/>
                                 <ComboBoxItem Content="Bottom Center" Tag="BottomCenter"/>
@@ -159,33 +150,33 @@
                         </StackPanel>
                     </GroupBox>
 
-                    <!-- Animation Settings -->
+                    <!-- Animation Settings (updated slide names) -->
                     <GroupBox Header="Animation Settings" Margin="0,5">
                         <StackPanel Margin="5">
                             <TextBlock Text="Enter Animation:" Margin="0,5,0,0"/>
                             <ComboBox x:Name="EnterAnimationCombo" Width="200" SelectedIndex="0">
                                 <ComboBoxItem Content="Fade" Tag="Fade"/>
                                 <ComboBoxItem Content="Scale" Tag="Scale"/>
-                                <ComboBoxItem Content="Slide From Top" Tag="SlideFromTop"/>
-                                <ComboBoxItem Content="Slide From Bottom" Tag="SlideFromBottom"/>
-                                <ComboBoxItem Content="Slide From Left" Tag="SlideFromLeft"/>
-                                <ComboBoxItem Content="Slide From Right" Tag="SlideFromRight"/>
+                                <ComboBoxItem Content="Slide Top" Tag="SlideTop"/>
+                                <ComboBoxItem Content="Slide Bottom" Tag="SlideBottom"/>
+                                <ComboBoxItem Content="Slide Left" Tag="SlideLeft"/>
+                                <ComboBoxItem Content="Slide Right" Tag="SlideRight"/>
                                 <ComboBoxItem Content="Fade + Scale" Tag="Fade,Scale"/>
-                                <ComboBoxItem Content="Fade + SlideFromTop" Tag="Fade,SlideFromTop"/>
-                                <ComboBoxItem Content="Scale + SlideFromBottom" Tag="Scale,SlideFromBottom"/>
+                                <ComboBoxItem Content="Fade + SlideTop" Tag="Fade,SlideTop"/>
+                                <ComboBoxItem Content="Scale + SlideBottom" Tag="Scale,SlideBottom"/>
                                 <ComboBoxItem Content="None" Tag="None"/>
                             </ComboBox>
                             <TextBlock Text="Exit Animation:" Margin="0,5,0,0"/>
                             <ComboBox x:Name="ExitAnimationCombo" Width="200" SelectedIndex="0">
                                 <ComboBoxItem Content="Fade" Tag="Fade"/>
                                 <ComboBoxItem Content="Scale" Tag="Scale"/>
-                                <ComboBoxItem Content="Slide From Top" Tag="SlideFromTop"/>
-                                <ComboBoxItem Content="Slide From Bottom" Tag="SlideFromBottom"/>
-                                <ComboBoxItem Content="Slide From Left" Tag="SlideFromLeft"/>
-                                <ComboBoxItem Content="Slide From Right" Tag="SlideFromRight"/>
+                                <ComboBoxItem Content="Slide Top" Tag="SlideTop"/>
+                                <ComboBoxItem Content="Slide Bottom" Tag="SlideBottom"/>
+                                <ComboBoxItem Content="Slide Left" Tag="SlideLeft"/>
+                                <ComboBoxItem Content="Slide Right" Tag="SlideRight"/>
                                 <ComboBoxItem Content="Fade + Scale" Tag="Fade,Scale"/>
-                                <ComboBoxItem Content="Fade + SlideFromTop" Tag="Fade,SlideFromTop"/>
-                                <ComboBoxItem Content="Scale + SlideFromBottom" Tag="Scale,SlideFromBottom"/>
+                                <ComboBoxItem Content="Fade + SlideTop" Tag="Fade,SlideTop"/>
+                                <ComboBoxItem Content="Scale + SlideBottom" Tag="Scale,SlideBottom"/>
                                 <ComboBoxItem Content="None" Tag="None"/>
                             </ComboBox>
                             <TextBlock Text="Duration (ms):" Margin="0,5,0,0"/>
@@ -224,7 +215,6 @@
             <Button x:Name="CloseButton" Content="Force Close" Click="CloseButton_Click" Width="120" Height="30" Margin="5"/>
         </StackPanel>
 
-        <!-- OmenPopup control -->
         <omen:OmenPopup x:Name="TestPopup" />
     </Grid>
 </Window>

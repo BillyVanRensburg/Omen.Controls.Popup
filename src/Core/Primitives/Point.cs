@@ -1,12 +1,32 @@
 ﻿namespace Omen.Controls.Popup.Core.Primitives;
 
-/// <summary>Represents an X/Y coordinate.</summary>
-public readonly struct Point
+/// <summary>
+/// Represents a point in two‑dimensional space using double precision coordinates.
+/// This struct is immutable and lightweight, suitable for use in positioning calculations.
+/// </summary>
+/// <param name="x">The X‑coordinate.</param>
+/// <param name="y">The Y‑coordinate.</param>
+public readonly struct Point(double x, double y)
 {
-    public double X { get; }
-    public double Y { get; }
+    /// <summary>
+    /// Gets the X‑coordinate of the point.
+    /// </summary>
+    public double X => x;
 
-    public Point(double x, double y) { X = x; Y = y; }
+    /// <summary>
+    /// Gets the Y‑coordinate of the point.
+    /// </summary>
+    public double Y => y;
 
-    public void Deconstruct(out double x, out double y) { x = X; y = Y; }
+    /// <summary>
+    /// Deconstructs the point into its X and Y components.
+    /// Enables tuple‑like deconstruction syntax: <c>(double x, double y) = point;</c>
+    /// </summary>
+    /// <param name="xOut">The X‑coordinate.</param>
+    /// <param name="yOut">The Y‑coordinate.</param>
+    public void Deconstruct(out double xOut, out double yOut)
+    {
+        xOut = x;
+        yOut = y;
+    }
 }

@@ -1,4 +1,5 @@
-﻿using Omen.Controls.Popup.Core.Enums;
+﻿using Omen.Controls.Popup.Application.Enums;
+using Omen.Controls.Popup.Core.Enums;
 using Omen.Controls.Popup.Core.Models;
 
 namespace Omen.Controls.Popup.Application.State;
@@ -6,7 +7,7 @@ namespace Omen.Controls.Popup.Application.State;
 public partial class PopupStateMachine
 {
     private TaskCompletionSource<bool>? _showTcs;
-    private TaskCompletionSource<DialogResult>? _dialogTcs;
+    private TaskCompletionSource<DialogAction>? _dialogTcs;
 
     /// <summary>
     /// Shows the popup as a non‑modal lightweight popup.
@@ -28,18 +29,18 @@ public partial class PopupStateMachine
     }
 
     /// <summary>
-    /// Shows the popup as a modal dialog, returning a result.
+    /// Shows the popup as a modal dialog, returning a <see cref="DialogAction"/> (e.g., OK, Cancel).
     /// </summary>
-    public async Task<DialogResult> ShowDialogAsync(PopupRequest request)
+    public async Task<DialogAction> ShowDialogAsync(PopupRequest request)
     {
         if (CurrentState != PopupState.Closed)
-            return DialogResult.None;
+            return DialogAction.None;
 
         request.IsModal = true;
-        _dialogTcs = new TaskCompletionSource<DialogResult>();
+        _dialogTcs = new TaskCompletionSource<DialogAction>();
 
         if (!await StartOpeningAsync(request))
-            return DialogResult.None;
+            return DialogAction.None;
 
         return await _dialogTcs.Task;
     }
@@ -48,7 +49,7 @@ public partial class PopupStateMachine
     /// Closes the popup (can be called from UI or externally).
     /// </summary>
     /// <param name="result">Result for modal dialogs; ignored for non‑modal.</param>
-    public async Task CloseAsync(DialogResult result = DialogResult.None)
+    public async Task CloseAsync(DialogAction result = DialogAction.None)
     {
         if (CurrentState != PopupState.Open)
             return;
@@ -65,7 +66,7 @@ public partial class PopupStateMachine
     }
 
     /// <summary>
-    /// Called by the UI when the popup is fully open.
+    /// Called by the UI when the popup is fully open (animation complete).
     /// </summary>
     public async Task NotifyOpened()
     {
@@ -73,7 +74,7 @@ public partial class PopupStateMachine
     }
 
     /// <summary>
-    /// Called by the UI when the popup is fully closed.
+    /// Called by the UI when the popup is fully closed (animation complete).
     /// </summary>
     public async Task NotifyClosed()
     {

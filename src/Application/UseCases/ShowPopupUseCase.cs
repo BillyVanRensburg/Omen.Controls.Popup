@@ -7,35 +7,30 @@ namespace Omen.Controls.Popup.Application.UseCases;
 
 /// <summary>
 /// Orchestrates showing a popup: state machine, positioning, and host interaction.
+/// This use case acts as a mediator between the UI (or a higher‑level controller) and the popup infrastructure.
 /// </summary>
-public class ShowPopupUseCase
+/// <param name="host">The platform‑specific popup host (e.g., WPF, MAUI, Blazor).</param>
+public class ShowPopupUseCase(IPopupHost host)
 {
-    private readonly IPopupHost _host;
-    private readonly PopupStateMachine _stateMachine;
+    private readonly IPopupHost _host = host;
+    private readonly PopupStateMachine _stateMachine = new();
 
-    public ShowPopupUseCase(IPopupHost host)
-    {
-        _host = host;
-        _stateMachine = new PopupStateMachine();
-
-        // Subscribe to state machine events to update host (but don't invoke host events)
-        _stateMachine.Opening += async args =>
-        {
-            // Host can react to opening, but we don't invoke host's event here.
-            // The host will have its own mechanism to raise events.
-            // For now, just let state machine manage the flow.
-            await Task.CompletedTask;
-        };
-        // Similarly for other events (optional, can be removed entirely)
-    }
-
+    /// <summary>
+    /// Executes the popup show operation asynchronously.
+    /// </summary>
+    /// <param name="request">The popup configuration and content.</param>
+    /// <param name="cancellationToken">Token to cancel the operation (if supported by the host).</param>
     public async Task ExecuteAsync(PopupRequest request, CancellationToken cancellationToken = default)
     {
         await _host.ShowAsync(request, cancellationToken);
         await _stateMachine.NotifyOpened();
     }
 
-    public async Task CloseAsync(DialogResult result = DialogResult.None)
+    /// <summary>
+    /// Closes the popup asynchronously, optionally passing a result for modal dialogs.
+    /// </summary>
+    /// <param name="result">The result of the dialog (e.g., OK, Cancel). Default is <see cref="DialogAction.None"/>.</param>
+    public async Task CloseAsync(DialogAction result = DialogAction.None)
     {
         await _stateMachine.CloseAsync(result);
         await _host.CloseAsync();

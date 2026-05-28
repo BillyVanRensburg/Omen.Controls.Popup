@@ -1,4 +1,5 @@
-﻿using Omen.Controls.Popup.Core.Enums;
+﻿using Omen.Controls.Popup.Application.Enums;
+using Omen.Controls.Popup.Core.Enums;
 using Omen.Controls.Popup.Core.Events;
 using Omen.Controls.Popup.Core.Models;
 
@@ -117,13 +118,4 @@ public partial class PopupStateMachine
         _currentRequest = null;
         await OnClosedAsync();
     }
-}
-
-/// <summary>Possible states of the popup.</summary>
-public enum PopupState
-{
-    Closed,
-    Opening,
-    Open,
-    Closing
 }
