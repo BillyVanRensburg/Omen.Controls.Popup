@@ -2,17 +2,18 @@ using System;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using WpfPopup = System.Windows.Controls.Primitives.Popup;
-using System.Windows.Controls.Primitives;
 using CorePoint = Omen.Controls.Popup.Core.Primitives.Point;
 using CoreSize = Omen.Controls.Popup.Core.Primitives.Size;
 using CoreRect = Omen.Controls.Popup.Core.Primitives.Rectangle;
 using Omen.Controls.Popup.Application.Positioning;
-using Omen.Controls.Popup.Core.Enums;
+using Omen.Controls.Popup.Core.Models;
+using CoreEnums = Omen.Controls.Popup.Core.Enums;
 
 namespace Omen.Controls.Popup.WPF.Controls
 {
@@ -38,7 +39,7 @@ namespace Omen.Controls.Popup.WPF.Controls
 
     public partial class OmenPopup : UserControl
     {
-        #region Dependency Properties
+        #region Dependency Properties (Core)
 
         public static readonly DependencyProperty IsOpenProperty =
             DependencyProperty.Register(nameof(IsOpen), typeof(bool), typeof(OmenPopup),
@@ -57,9 +58,9 @@ namespace Omen.Controls.Popup.WPF.Controls
                 await popup.CloseAsync();
         }
 
-        public static readonly DependencyProperty ContentProperty =
+        public static new readonly DependencyProperty ContentProperty =
             DependencyProperty.Register(nameof(Content), typeof(object), typeof(OmenPopup));
-        public object Content
+        public new object Content
         {
             get => GetValue(ContentProperty);
             set => SetValue(ContentProperty, value);
@@ -153,6 +154,7 @@ namespace Omen.Controls.Popup.WPF.Controls
             set => SetValue(ExitEasingProperty, value);
         }
 
+        // Lightweight specific
         public static readonly DependencyProperty StaysOpenOnOutsideClickProperty =
             DependencyProperty.Register(nameof(StaysOpenOnOutsideClick), typeof(bool), typeof(OmenPopup), new PropertyMetadata(true));
         public bool StaysOpenOnOutsideClick
@@ -167,6 +169,91 @@ namespace Omen.Controls.Popup.WPF.Controls
         {
             get => (FrameworkElement?)GetValue(AnchorElementProperty);
             set => SetValue(AnchorElementProperty, value);
+        }
+
+        #endregion
+
+        #region Modal Positioning Properties
+
+        public static readonly DependencyProperty ModalAnchorTargetProperty =
+            DependencyProperty.Register(nameof(ModalAnchorTarget), typeof(CoreEnums.AnchorTarget), typeof(OmenPopup), new PropertyMetadata(CoreEnums.AnchorTarget.ParentWindowCenter));
+
+        public CoreEnums.AnchorTarget ModalAnchorTarget
+        {
+            get => (CoreEnums.AnchorTarget)GetValue(ModalAnchorTargetProperty);
+            set => SetValue(ModalAnchorTargetProperty, value);
+        }
+
+        public static readonly DependencyProperty ModalAnchorElementProperty =
+            DependencyProperty.Register(nameof(ModalAnchorElement), typeof(FrameworkElement), typeof(OmenPopup));
+
+        public FrameworkElement? ModalAnchorElement
+        {
+            get => (FrameworkElement?)GetValue(ModalAnchorElementProperty);
+            set => SetValue(ModalAnchorElementProperty, value);
+        }
+
+        public static readonly DependencyProperty ModalAlignmentProperty =
+            DependencyProperty.Register(nameof(ModalAlignment), typeof(CoreEnums.PopupAlignment), typeof(OmenPopup), new PropertyMetadata(CoreEnums.PopupAlignment.Center));
+
+        public CoreEnums.PopupAlignment ModalAlignment
+        {
+            get => (CoreEnums.PopupAlignment)GetValue(ModalAlignmentProperty);
+            set => SetValue(ModalAlignmentProperty, value);
+        }
+
+        public static readonly DependencyProperty ModalOffsetXProperty =
+            DependencyProperty.Register(nameof(ModalOffsetX), typeof(int), typeof(OmenPopup), new PropertyMetadata(0));
+
+        public int ModalOffsetX
+        {
+            get => (int)GetValue(ModalOffsetXProperty);
+            set => SetValue(ModalOffsetXProperty, value);
+        }
+
+        public static readonly DependencyProperty ModalOffsetYProperty =
+            DependencyProperty.Register(nameof(ModalOffsetY), typeof(int), typeof(OmenPopup), new PropertyMetadata(0));
+
+        public int ModalOffsetY
+        {
+            get => (int)GetValue(ModalOffsetYProperty);
+            set => SetValue(ModalOffsetYProperty, value);
+        }
+
+        public static readonly DependencyProperty ModalAutoFlipProperty =
+            DependencyProperty.Register(nameof(ModalAutoFlip), typeof(bool), typeof(OmenPopup), new PropertyMetadata(true));
+
+        public bool ModalAutoFlip
+        {
+            get => (bool)GetValue(ModalAutoFlipProperty);
+            set => SetValue(ModalAutoFlipProperty, value);
+        }
+
+        public static readonly DependencyProperty ModalScreenEdgeProperty =
+            DependencyProperty.Register(nameof(ModalScreenEdge), typeof(CoreEnums.ScreenEdge), typeof(OmenPopup), new PropertyMetadata(CoreEnums.ScreenEdge.Top));
+
+        public CoreEnums.ScreenEdge ModalScreenEdge
+        {
+            get => (CoreEnums.ScreenEdge)GetValue(ModalScreenEdgeProperty);
+            set => SetValue(ModalScreenEdgeProperty, value);
+        }
+
+        public static readonly DependencyProperty ModalCustomXProperty =
+            DependencyProperty.Register(nameof(ModalCustomX), typeof(double), typeof(OmenPopup), new PropertyMetadata(0.0));
+
+        public double ModalCustomX
+        {
+            get => (double)GetValue(ModalCustomXProperty);
+            set => SetValue(ModalCustomXProperty, value);
+        }
+
+        public static readonly DependencyProperty ModalCustomYProperty =
+            DependencyProperty.Register(nameof(ModalCustomY), typeof(double), typeof(OmenPopup), new PropertyMetadata(0.0));
+
+        public double ModalCustomY
+        {
+            get => (double)GetValue(ModalCustomYProperty);
+            set => SetValue(ModalCustomYProperty, value);
         }
 
         #endregion
@@ -204,21 +291,19 @@ namespace Omen.Controls.Popup.WPF.Controls
             if (IsOpen) return;
 
             if (IsModal)
-            {
                 await ShowModalAsync();
-            }
             else
-            {
                 await ShowLightweightAsync();
-            }
         }
 
         // ------------------------------------------------------------
-        // Your existing modal logic (unchanged)
+        // Modal with positioning (mouse cursor fixed)
         // ------------------------------------------------------------
         private async Task ShowModalAsync()
         {
             EnsureTransformGroup(ModalContentBorder);
+
+            // Animation start state
             ModalContentBorder.Opacity = ((EnterAnimation & AnimationType.Fade) != 0) ? 0.0 : 1.0;
 
             var tg = ModalContentBorder.RenderTransform as TransformGroup;
@@ -247,14 +332,102 @@ namespace Omen.Controls.Popup.WPF.Controls
                 startX = -Math.Max(1, width);
             else if ((EnterAnimation & AnimationType.SlideFromRight) != 0)
                 startX = Math.Max(1, width);
-
             if ((EnterAnimation & AnimationType.SlideFromTop) != 0)
                 startY = -Math.Max(1, height);
             else if ((EnterAnimation & AnimationType.SlideFromBottom) != 0)
                 startY = Math.Max(1, height);
-
             translate.X = startX;
             translate.Y = startY;
+
+            await EnsureTargetHasSize(ModalContentBorder);
+
+            double popupWidth = ModalContentBorder.ActualWidth;
+            double popupHeight = ModalContentBorder.ActualHeight;
+            if (popupWidth <= 0) popupWidth = ModalContentBorder.DesiredSize.Width;
+            if (popupHeight <= 0) popupHeight = ModalContentBorder.DesiredSize.Height;
+            if (popupWidth <= 0) popupWidth = 200;
+            if (popupHeight <= 0) popupHeight = 100;
+
+            var screenBounds = GetScreenBounds();
+
+            // Special handling for mouse cursor (direct calculation)
+            if (ModalAnchorTarget == CoreEnums.AnchorTarget.MouseCursor)
+            {
+                var mainWin = System.Windows.Application.Current.MainWindow;
+                var mousePos = Mouse.GetPosition(mainWin);
+                var mouseScreen = mainWin.PointToScreen(mousePos);
+
+                double x = mouseScreen.X;
+                double y = mouseScreen.Y;
+
+                switch (ModalAlignment)
+                {
+                    case CoreEnums.PopupAlignment.TopLeft: break;
+                    case CoreEnums.PopupAlignment.TopCenter: x -= popupWidth / 2; break;
+                    case CoreEnums.PopupAlignment.TopRight: x -= popupWidth; break;
+                    case CoreEnums.PopupAlignment.LeftCenter: y -= popupHeight / 2; break;
+                    case CoreEnums.PopupAlignment.Center: x -= popupWidth / 2; y -= popupHeight / 2; break;
+                    case CoreEnums.PopupAlignment.RightCenter: x -= popupWidth; y -= popupHeight / 2; break;
+                    case CoreEnums.PopupAlignment.BottomLeft: y -= popupHeight; break;
+                    case CoreEnums.PopupAlignment.BottomCenter: x -= popupWidth / 2; y -= popupHeight; break;
+                    case CoreEnums.PopupAlignment.BottomRight: x -= popupWidth; y -= popupHeight; break;
+                }
+
+                x += ModalOffsetX;
+                y += ModalOffsetY;
+
+                if (ModalAutoFlip)
+                {
+                    if (x + popupWidth > screenBounds.Right) x = screenBounds.Right - popupWidth;
+                    if (x < screenBounds.Left) x = screenBounds.Left;
+                    if (y + popupHeight > screenBounds.Bottom) y = screenBounds.Bottom - popupHeight;
+                    if (y < screenBounds.Top) y = screenBounds.Top;
+                }
+
+                ModalContentBorder.Margin = new Thickness(x, y, 0, 0);
+            }
+            else
+            {
+                // Use PositionCalculator for other anchor types
+                CoreRect? anchorRect = null;
+                switch (ModalAnchorTarget)
+                {
+                    case CoreEnums.AnchorTarget.UiElement when ModalAnchorElement != null:
+                        var elem = ModalAnchorElement;
+                        var elemPoint = elem.PointToScreen(new System.Windows.Point(0, 0));
+                        var elemSize = new System.Windows.Size(elem.ActualWidth, elem.ActualHeight);
+                        anchorRect = new CoreRect(elemPoint.X, elemPoint.Y, elemSize.Width, elemSize.Height);
+                        break;
+                    case CoreEnums.AnchorTarget.ScreenEdge:
+                        anchorRect = null;
+                        break;
+                    case CoreEnums.AnchorTarget.CustomCoordinates:
+                        anchorRect = new CoreRect(ModalCustomX, ModalCustomY, 1, 1);
+                        break;
+                    case CoreEnums.AnchorTarget.ParentWindowCenter:
+                    default:
+                        anchorRect = null;
+                        break;
+                }
+
+                var popupSize = new CoreSize(popupWidth, popupHeight);
+                var request = new PopupRequest
+                {
+                    AnchorTarget = ModalAnchorTarget,
+                    Alignment = ModalAlignment,
+                    Offset = (ModalOffsetX, ModalOffsetY),
+                    AutoFlip = ModalAutoFlip,
+                    ScreenEdge = ModalAnchorTarget == CoreEnums.AnchorTarget.ScreenEdge ? ModalScreenEdge : null,
+                    CustomX = ModalAnchorTarget == CoreEnums.AnchorTarget.CustomCoordinates ? ModalCustomX : null,
+                    CustomY = ModalAnchorTarget == CoreEnums.AnchorTarget.CustomCoordinates ? ModalCustomY : null
+                };
+
+                var finalPos = PositionCalculator.CalculatePosition(request, anchorRect, popupSize, screenBounds);
+                ModalContentBorder.Margin = new Thickness(finalPos.X, finalPos.Y, 0, 0);
+            }
+
+            ModalContentBorder.HorizontalAlignment = HorizontalAlignment.Left;
+            ModalContentBorder.VerticalAlignment = VerticalAlignment.Top;
 
             OverlayGrid.Visibility = Visibility.Visible;
             await Dispatcher.InvokeAsync(() => ModalContentBorder.UpdateLayout(), DispatcherPriority.Render);
@@ -268,11 +441,10 @@ namespace Omen.Controls.Popup.WPF.Controls
         }
 
         // ------------------------------------------------------------
-        // Lightweight mode
+        // Lightweight mode (unchanged, uses mouse placement built‑in)
         // ------------------------------------------------------------
         private async Task ShowLightweightAsync()
         {
-            // Build the visual tree with proper content and close button
             var border = new Border
             {
                 Background = ModalContentBorder.Background,
@@ -284,10 +456,10 @@ namespace Omen.Controls.Popup.WPF.Controls
                 RenderTransform = new TransformGroup
                 {
                     Children = new TransformCollection
-            {
-                new ScaleTransform(1, 1),
-                new TranslateTransform(0, 0)
-            }
+                    {
+                        new ScaleTransform(1, 1),
+                        new TranslateTransform(0, 0)
+                    }
                 },
                 RenderTransformOrigin = new Point(0.5, 0.5)
             };
@@ -354,22 +526,12 @@ namespace Omen.Controls.Popup.WPF.Controls
             {
                 Child = _lightweightContentHost,
                 AllowsTransparency = true,
-                StaysOpen = !StaysOpenOnOutsideClick
+                StaysOpen = !StaysOpenOnOutsideClick,
+                PlacementTarget = AnchorElement,
+                Placement = AnchorElement != null ? PlacementMode.Custom : PlacementMode.MousePoint
             };
-
-            // Choose placement strategy
             if (AnchorElement != null)
-            {
-                _lightweightPopup.PlacementTarget = AnchorElement;
-                _lightweightPopup.Placement = PlacementMode.Custom;
                 _lightweightPopup.CustomPopupPlacementCallback = OnCustomPopupPlacement;
-            }
-            else
-            {
-                // Mouse anchor: use built-in MousePoint placement
-                _lightweightPopup.Placement = PlacementMode.MousePoint;
-                // No placement target needed
-            }
 
             _lightweightPopup.Closed += (s, e) => _ = CloseAsync();
             _lightweightPopup.IsOpen = true;
@@ -385,20 +547,15 @@ namespace Omen.Controls.Popup.WPF.Controls
             var corePopupSize = new CoreSize(popupSize.Width, popupSize.Height);
             CoreRect? coreAnchorRect = anchorRect.HasValue ? new CoreRect(anchorRect.Value.X, anchorRect.Value.Y, anchorRect.Value.Width, anchorRect.Value.Height) : null;
 
-            var request = new Omen.Controls.Popup.Core.Models.PopupRequest
+            var request = new PopupRequest
             {
-                AnchorTarget = AnchorElement != null ? AnchorTarget.UiElement : AnchorTarget.MouseCursor,
-                Alignment = PopupAlignment.BottomCenter,
+                AnchorTarget = AnchorElement != null ? CoreEnums.AnchorTarget.UiElement : CoreEnums.AnchorTarget.MouseCursor,
+                Alignment = CoreEnums.PopupAlignment.BottomCenter,
                 Offset = (5, 5),
                 AutoFlip = true
             };
 
-            var position = PositionCalculator.CalculatePosition(
-                request,
-                coreAnchorRect,
-                corePopupSize,
-                screenBounds);
-
+            var position = PositionCalculator.CalculatePosition(request, coreAnchorRect, corePopupSize, screenBounds);
             double x = position.X;
             double y = position.Y;
 
@@ -408,7 +565,6 @@ namespace Omen.Controls.Popup.WPF.Controls
                 x -= targetPoint.X;
                 y -= targetPoint.Y;
             }
-
             return new[] { new CustomPopupPlacement(new System.Windows.Point(x, y), PopupPrimaryAxis.None) };
         }
 
@@ -439,9 +595,6 @@ namespace Omen.Controls.Popup.WPF.Controls
             return new CoreRect(0, 0, width, height);
         }
 
-        // ------------------------------------------------------------
-        // CloseAsync (handles both modes)
-        // ------------------------------------------------------------
         public async Task CloseAsync()
         {
             if (!IsOpen) return;
@@ -450,6 +603,9 @@ namespace Omen.Controls.Popup.WPF.Controls
             {
                 await AnimateExitAsync(ModalContentBorder, ExitAnimation, ExitDuration, ExitEasing);
                 ResetTransforms(ModalContentBorder);
+                ModalContentBorder.Margin = new Thickness(0);
+                ModalContentBorder.HorizontalAlignment = HorizontalAlignment.Center;
+                ModalContentBorder.VerticalAlignment = VerticalAlignment.Center;
                 OverlayGrid.Visibility = Visibility.Collapsed;
             }
             else
@@ -468,7 +624,7 @@ namespace Omen.Controls.Popup.WPF.Controls
         }
 
         // ------------------------------------------------------------
-        // Your existing helper methods (keep exactly as you have them)
+        // Animation helpers (unchanged)
         // ------------------------------------------------------------
         private void ResetTransforms(FrameworkElement target)
         {
@@ -498,7 +654,6 @@ namespace Omen.Controls.Popup.WPF.Controls
         private async Task AnimateEnterAsync(FrameworkElement target, AnimationType animation, int durationMs, EasingType easing)
         {
             EnsureTransformGroup(target);
-
             if (animation == AnimationType.None || durationMs <= 0)
             {
                 target.Opacity = 1;
@@ -512,155 +667,79 @@ namespace Omen.Controls.Popup.WPF.Controls
             var tg = target.RenderTransform as TransformGroup;
             if (tg == null || tg.Children.Count < 2)
                 throw new InvalidOperationException("Target must have a TransformGroup with ScaleTransform and TranslateTransform.");
-
             var scale = tg.Children[0] as ScaleTransform ?? new ScaleTransform(1, 1);
             var translate = tg.Children[1] as TranslateTransform ?? new TranslateTransform(0, 0);
 
             var duration = new Duration(TimeSpan.FromMilliseconds(durationMs));
             var easingFunc = GetEasingFunction(easing);
-
             var tcs = new TaskCompletionSource<bool>();
             bool completionHooked = false;
 
             if ((animation & AnimationType.Fade) != 0)
             {
-                var fadeAnim = new DoubleAnimation
-                {
-                    From = target.Opacity,
-                    To = 1.0,
-                    Duration = duration,
-                    EasingFunction = easingFunc
-                };
-                fadeAnim.Completed += (s, e) =>
-                {
-                    if (!completionHooked) { completionHooked = true; tcs.TrySetResult(true); }
-                };
+                var fadeAnim = new DoubleAnimation { From = target.Opacity, To = 1.0, Duration = duration, EasingFunction = easingFunc };
+                fadeAnim.Completed += (s, e) => { if (!completionHooked) { completionHooked = true; tcs.TrySetResult(true); } };
                 target.BeginAnimation(UIElement.OpacityProperty, fadeAnim);
             }
 
             if ((animation & AnimationType.Scale) != 0)
             {
-                var scaleXAnim = new DoubleAnimation
-                {
-                    From = scale.ScaleX,
-                    To = 1.0,
-                    Duration = duration,
-                    EasingFunction = easingFunc
-                };
-                var scaleYAnim = new DoubleAnimation
-                {
-                    From = scale.ScaleY,
-                    To = 1.0,
-                    Duration = duration,
-                    EasingFunction = easingFunc
-                };
-                scaleYAnim.Completed += (s, e) =>
-                {
-                    if (!completionHooked) { completionHooked = true; tcs.TrySetResult(true); }
-                };
+                var scaleXAnim = new DoubleAnimation { From = scale.ScaleX, To = 1.0, Duration = duration, EasingFunction = easingFunc };
+                var scaleYAnim = new DoubleAnimation { From = scale.ScaleY, To = 1.0, Duration = duration, EasingFunction = easingFunc };
+                scaleYAnim.Completed += (s, e) => { if (!completionHooked) { completionHooked = true; tcs.TrySetResult(true); } };
                 scale.BeginAnimation(ScaleTransform.ScaleXProperty, scaleXAnim);
                 scale.BeginAnimation(ScaleTransform.ScaleYProperty, scaleYAnim);
             }
 
-            bool hasSlideY = (animation & (AnimationType.SlideFromTop | AnimationType.SlideFromBottom)) != 0;
-            if (hasSlideY)
+            if ((animation & (AnimationType.SlideFromTop | AnimationType.SlideFromBottom)) != 0)
             {
-                var slideYAnim = new DoubleAnimation
-                {
-                    From = translate.Y,
-                    To = 0.0,
-                    Duration = duration,
-                    EasingFunction = easingFunc
-                };
-                slideYAnim.Completed += (s, e) =>
-                {
-                    if (!completionHooked) { completionHooked = true; tcs.TrySetResult(true); }
-                };
+                var slideYAnim = new DoubleAnimation { From = translate.Y, To = 0.0, Duration = duration, EasingFunction = easingFunc };
+                slideYAnim.Completed += (s, e) => { if (!completionHooked) { completionHooked = true; tcs.TrySetResult(true); } };
                 translate.BeginAnimation(TranslateTransform.YProperty, slideYAnim);
             }
 
-            bool hasSlideX = (animation & (AnimationType.SlideFromLeft | AnimationType.SlideFromRight)) != 0;
-            if (hasSlideX)
+            if ((animation & (AnimationType.SlideFromLeft | AnimationType.SlideFromRight)) != 0)
             {
-                var slideXAnim = new DoubleAnimation
-                {
-                    From = translate.X,
-                    To = 0.0,
-                    Duration = duration,
-                    EasingFunction = easingFunc
-                };
-                slideXAnim.Completed += (s, e) =>
-                {
-                    if (!completionHooked) { completionHooked = true; tcs.TrySetResult(true); }
-                };
+                var slideXAnim = new DoubleAnimation { From = translate.X, To = 0.0, Duration = duration, EasingFunction = easingFunc };
+                slideXAnim.Completed += (s, e) => { if (!completionHooked) { completionHooked = true; tcs.TrySetResult(true); } };
                 translate.BeginAnimation(TranslateTransform.XProperty, slideXAnim);
             }
 
             var fallbackDelay = Task.Delay(durationMs + 50);
             var completed = await Task.WhenAny(tcs.Task, fallbackDelay);
-            if (completed == fallbackDelay)
-                tcs.TrySetResult(true);
-
+            if (completed == fallbackDelay) tcs.TrySetResult(true);
             await tcs.Task;
         }
 
         private async Task AnimateExitAsync(FrameworkElement target, AnimationType animation, int durationMs, EasingType easing)
         {
             EnsureTransformGroup(target);
-
-            if (animation == AnimationType.None || durationMs <= 0)
-                return;
+            if (animation == AnimationType.None || durationMs <= 0) return;
 
             await EnsureTargetHasSize(target);
             var tg = target.RenderTransform as TransformGroup;
             if (tg == null || tg.Children.Count < 2)
                 throw new InvalidOperationException("Target must have a TransformGroup with ScaleTransform and TranslateTransform.");
-
             var scale = tg.Children[0] as ScaleTransform ?? new ScaleTransform(1, 1);
             var translate = tg.Children[1] as TranslateTransform ?? new TranslateTransform(0, 0);
 
             var duration = new Duration(TimeSpan.FromMilliseconds(durationMs));
             var easingFunc = GetEasingFunction(easing);
-
             var tcs = new TaskCompletionSource<bool>();
             bool completionHooked = false;
 
             if ((animation & AnimationType.Fade) != 0)
             {
-                var fadeAnim = new DoubleAnimation
-                {
-                    From = target.Opacity,
-                    To = 0.0,
-                    Duration = duration,
-                    EasingFunction = easingFunc
-                };
-                fadeAnim.Completed += (s, e) =>
-                {
-                    if (!completionHooked) { completionHooked = true; tcs.TrySetResult(true); }
-                };
+                var fadeAnim = new DoubleAnimation { From = target.Opacity, To = 0.0, Duration = duration, EasingFunction = easingFunc };
+                fadeAnim.Completed += (s, e) => { if (!completionHooked) { completionHooked = true; tcs.TrySetResult(true); } };
                 target.BeginAnimation(UIElement.OpacityProperty, fadeAnim);
             }
 
             if ((animation & AnimationType.Scale) != 0)
             {
-                var scaleXAnim = new DoubleAnimation
-                {
-                    From = scale.ScaleX,
-                    To = 0.8,
-                    Duration = duration,
-                    EasingFunction = easingFunc
-                };
-                var scaleYAnim = new DoubleAnimation
-                {
-                    From = scale.ScaleY,
-                    To = 0.8,
-                    Duration = duration,
-                    EasingFunction = easingFunc
-                };
-                scaleYAnim.Completed += (s, e) =>
-                {
-                    if (!completionHooked) { completionHooked = true; tcs.TrySetResult(true); }
-                };
+                var scaleXAnim = new DoubleAnimation { From = scale.ScaleX, To = 0.8, Duration = duration, EasingFunction = easingFunc };
+                var scaleYAnim = new DoubleAnimation { From = scale.ScaleY, To = 0.8, Duration = duration, EasingFunction = easingFunc };
+                scaleYAnim.Completed += (s, e) => { if (!completionHooked) { completionHooked = true; tcs.TrySetResult(true); } };
                 scale.BeginAnimation(ScaleTransform.ScaleXProperty, scaleXAnim);
                 scale.BeginAnimation(ScaleTransform.ScaleYProperty, scaleYAnim);
             }
@@ -668,42 +747,22 @@ namespace Omen.Controls.Popup.WPF.Controls
             if ((animation & (AnimationType.SlideFromTop | AnimationType.SlideFromBottom)) != 0)
             {
                 double to = (animation & AnimationType.SlideFromTop) != 0 ? -target.ActualHeight : target.ActualHeight;
-                var slideAnim = new DoubleAnimation
-                {
-                    From = translate.Y,
-                    To = to,
-                    Duration = duration,
-                    EasingFunction = easingFunc
-                };
-                slideAnim.Completed += (s, e) =>
-                {
-                    if (!completionHooked) { completionHooked = true; tcs.TrySetResult(true); }
-                };
+                var slideAnim = new DoubleAnimation { From = translate.Y, To = to, Duration = duration, EasingFunction = easingFunc };
+                slideAnim.Completed += (s, e) => { if (!completionHooked) { completionHooked = true; tcs.TrySetResult(true); } };
                 translate.BeginAnimation(TranslateTransform.YProperty, slideAnim);
             }
 
             if ((animation & (AnimationType.SlideFromLeft | AnimationType.SlideFromRight)) != 0)
             {
                 double to = (animation & AnimationType.SlideFromLeft) != 0 ? -target.ActualWidth : target.ActualWidth;
-                var slideAnim = new DoubleAnimation
-                {
-                    From = translate.X,
-                    To = to,
-                    Duration = duration,
-                    EasingFunction = easingFunc
-                };
-                slideAnim.Completed += (s, e) =>
-                {
-                    if (!completionHooked) { completionHooked = true; tcs.TrySetResult(true); }
-                };
+                var slideAnim = new DoubleAnimation { From = translate.X, To = to, Duration = duration, EasingFunction = easingFunc };
+                slideAnim.Completed += (s, e) => { if (!completionHooked) { completionHooked = true; tcs.TrySetResult(true); } };
                 translate.BeginAnimation(TranslateTransform.XProperty, slideAnim);
             }
 
             var fallbackDelay = Task.Delay(durationMs + 50);
             var completed = await Task.WhenAny(tcs.Task, fallbackDelay);
-            if (completed == fallbackDelay)
-                tcs.TrySetResult(true);
-
+            if (completed == fallbackDelay) tcs.TrySetResult(true);
             await tcs.Task;
         }
 
@@ -727,10 +786,7 @@ namespace Omen.Controls.Popup.WPF.Controls
         private async Task EnsureTargetHasSize(FrameworkElement target, int timeoutMs = 500)
         {
             if (target == null) return;
-
-            if (target.ActualWidth > 0 && target.ActualHeight > 0)
-                return;
-
+            if (target.ActualWidth > 0 && target.ActualHeight > 0) return;
             await target.Dispatcher.InvokeAsync(() =>
             {
                 try
@@ -739,13 +795,9 @@ namespace Omen.Controls.Popup.WPF.Controls
                     target.Arrange(new Rect(0, 0, target.DesiredSize.Width, target.DesiredSize.Height));
                     target.UpdateLayout();
                 }
-                catch
-                {
-                }
+                catch { }
             }, DispatcherPriority.Loaded);
-
-            if (target.ActualWidth > 0 && target.ActualHeight > 0)
-                return;
+            if (target.ActualWidth > 0 && target.ActualHeight > 0) return;
 
             var tcs = new TaskCompletionSource<bool>();
             SizeChangedEventHandler? handler = null;
@@ -758,13 +810,9 @@ namespace Omen.Controls.Popup.WPF.Controls
                 }
             };
             target.SizeChanged += handler;
-
             var delayTask = Task.Delay(timeoutMs);
             var completed = await Task.WhenAny(tcs.Task, delayTask);
-            if (completed == delayTask)
-            {
-                target.SizeChanged -= handler;
-            }
+            if (completed == delayTask) target.SizeChanged -= handler;
         }
 
         private IEasingFunction? GetEasingFunction(EasingType type)
