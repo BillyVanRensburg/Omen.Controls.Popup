@@ -9,18 +9,8 @@
 
         <!-- Modern default close button template -->
         <ControlTemplate x:Key="DefaultCloseButtonTemplate" TargetType="Button">
-            <Border x:Name="Border" 
-                    Background="#E0E0E0" 
-                    Width="30" 
-                    Height="30" 
-                    CornerRadius="15" 
-                    Cursor="Hand">
-                <TextBlock Text="✕" 
-                           FontSize="14" 
-                           Foreground="#666666" 
-                           HorizontalAlignment="Center" 
-                           VerticalAlignment="Center"
-                           FontFamily="Segoe UI"/>
+            <Border x:Name="Border" Background="#E0E0E0" Width="30" Height="30" CornerRadius="15" Cursor="Hand">
+                <TextBlock Text="✕" FontSize="14" Foreground="#666666" HorizontalAlignment="Center" VerticalAlignment="Center" FontFamily="Segoe UI"/>
             </Border>
             <ControlTemplate.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
@@ -32,20 +22,10 @@
             </ControlTemplate.Triggers>
         </ControlTemplate>
 
-        <!-- Modern custom close button template (blue accent) -->
+        <!-- Modern custom close button template -->
         <ControlTemplate x:Key="CustomCloseButtonTemplate" TargetType="Button">
-            <Border x:Name="Border" 
-                    Background="#0078D4" 
-                    Width="32" 
-                    Height="32" 
-                    CornerRadius="16" 
-                    Cursor="Hand">
-                <TextBlock Text="✕" 
-                           FontSize="16" 
-                           Foreground="White" 
-                           HorizontalAlignment="Center" 
-                           VerticalAlignment="Center"
-                           FontFamily="Segoe UI"/>
+            <Border x:Name="Border" Background="#0078D4" Width="32" Height="32" CornerRadius="16" Cursor="Hand">
+                <TextBlock Text="✕" FontSize="16" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" FontFamily="Segoe UI"/>
             </Border>
             <ControlTemplate.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
@@ -70,7 +50,14 @@
                 CornerRadius="8" 
                 Padding="10"
                 HorizontalAlignment="Center" 
-                VerticalAlignment="Center">
+                VerticalAlignment="Center"
+                RenderTransformOrigin="0.5,0.5">
+            <Border.RenderTransform>
+                <TransformGroup>
+                    <ScaleTransform ScaleX="1" ScaleY="1"/>
+                    <TranslateTransform X="0" Y="0"/>
+                </TransformGroup>
+            </Border.RenderTransform>
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
