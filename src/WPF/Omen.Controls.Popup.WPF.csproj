@@ -9,6 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="LICENSE" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Core\Omen.Controls.Popup.Core.csproj" />
 	<ProjectReference Include="..\Application\Omen.Controls.Popup.Application.csproj" />
   </ItemGroup>
