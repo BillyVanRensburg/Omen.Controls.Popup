@@ -19,6 +19,7 @@ namespace Omen.Controls.Popup.Sample
 
             AnchorTargetCombo.SelectionChanged += AnchorTargetCombo_SelectionChanged;
             OverlayBrushCombo.SelectionChanged += OverlayBrushCombo_SelectionChanged;
+            EasingCombo.SelectionChanged += EasingCombo_SelectionChanged; // Add this
 
             if (AnchorElementCombo.Items.Count > 0)
                 AnchorElementCombo.SelectedIndex = 0;
@@ -47,6 +48,16 @@ namespace Omen.Controls.Popup.Sample
 
             AnchorElementPanel.Visibility = isUiElement ? Visibility.Visible : Visibility.Collapsed;
             CustomCoordsPanel.Visibility = isCustom ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private void EasingCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (EasingCombo.SelectedItem is ComboBoxItem item)
+            {
+                var tag = item.Tag as string;
+                if (CubicBezierPanel != null)
+                    CubicBezierPanel.Visibility = (tag == "CubicBezier") ? Visibility.Visible : Visibility.Collapsed;
+            }
         }
 
         private async void ShowButton_Click(object sender, RoutedEventArgs e)
@@ -133,6 +144,18 @@ namespace Omen.Controls.Popup.Sample
                 TestPopup.EnterEasing = ParseEasing(easingTag);
                 TestPopup.ExitEasing = ParseEasing(easingTag);
 
+                // Cubic Bezier points
+                if (easingTag == "CubicBezier")
+                {
+                    TestPopup.EnterCubicBezierPoints = CubicBezierPointsBox.Text;
+                    TestPopup.ExitCubicBezierPoints = CubicBezierPointsBox.Text;
+                }
+                else
+                {
+                    TestPopup.EnterCubicBezierPoints = null;
+                    TestPopup.ExitCubicBezierPoints = null;
+                }
+
                 // Content – always create a fresh instance for dialog
                 if (DialogContentRadio.IsChecked == true)
                 {
@@ -212,6 +235,7 @@ namespace Omen.Controls.Popup.Sample
                 "EaseIn" => EasingType.EaseIn,
                 "EaseOut" => EasingType.EaseOut,
                 "EaseInOut" => EasingType.EaseInOut,
+                "CubicBezier" => EasingType.CubicBezier,
                 _ => EasingType.Linear,
             };
         }

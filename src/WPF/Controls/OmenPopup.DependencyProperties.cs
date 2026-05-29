@@ -176,6 +176,38 @@ public partial class OmenPopup
         set => SetValue(ExitEasingProperty, value);
     }
 
+    // ------------------------------------------------------------------------
+    // Cubic Bezier Points (for custom easing curves)
+    // ------------------------------------------------------------------------
+
+    /// <summary>Identifies the <see cref="EnterCubicBezierPoints"/> dependency property.</summary>
+    public static readonly DependencyProperty EnterCubicBezierPointsProperty =
+        DependencyProperty.Register(nameof(EnterCubicBezierPoints), typeof(string), typeof(OmenPopup), new PropertyMetadata(null));
+
+    /// <summary>
+    /// Gets or sets the cubic Bezier control points for the enter animation when <see cref="EnterEasing"/> is <see cref="CoreEnums.EasingType.CubicBezier"/>.
+    /// Format: "X1,Y1,X2,Y2" (e.g., "0.25,0.1,0.25,1.0"). Each value should be between 0 and 1.
+    /// </summary>
+    public string? EnterCubicBezierPoints
+    {
+        get => (string?)GetValue(EnterCubicBezierPointsProperty);
+        set => SetValue(EnterCubicBezierPointsProperty, value);
+    }
+
+    /// <summary>Identifies the <see cref="ExitCubicBezierPoints"/> dependency property.</summary>
+    public static readonly DependencyProperty ExitCubicBezierPointsProperty =
+        DependencyProperty.Register(nameof(ExitCubicBezierPoints), typeof(string), typeof(OmenPopup), new PropertyMetadata(null));
+
+    /// <summary>
+    /// Gets or sets the cubic Bezier control points for the exit animation when <see cref="ExitEasing"/> is <see cref="CoreEnums.EasingType.CubicBezier"/>.
+    /// Format: "X1,Y1,X2,Y2" (e.g., "0.25,0.1,0.25,1.0"). Each value should be between 0 and 1.
+    /// </summary>
+    public string? ExitCubicBezierPoints
+    {
+        get => (string?)GetValue(ExitCubicBezierPointsProperty);
+        set => SetValue(ExitCubicBezierPointsProperty, value);
+    }
+
     #endregion
 
     #region Positioning Properties (common for modal and lightweight)

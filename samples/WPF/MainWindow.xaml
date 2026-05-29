@@ -169,12 +169,17 @@
                                 <TextBlock Text="{Binding Value, ElementName=DurationSlider, StringFormat={}{0:F0} ms}" Margin="10,0,0,0"/>
                             </StackPanel>
                             <TextBlock Text="Easing:" Margin="0,5,0,0"/>
-                            <ComboBox x:Name="EasingCombo" Width="150" SelectedIndex="2">
+                            <ComboBox x:Name="EasingCombo" Width="150" SelectedIndex="2" SelectionChanged="EasingCombo_SelectionChanged">
                                 <ComboBoxItem Content="Linear" Tag="Linear"/>
                                 <ComboBoxItem Content="Ease In" Tag="EaseIn"/>
                                 <ComboBoxItem Content="Ease Out" Tag="EaseOut"/>
                                 <ComboBoxItem Content="Ease In Out" Tag="EaseInOut"/>
+                                <ComboBoxItem Content="Cubic Bezier" Tag="CubicBezier"/>
                             </ComboBox>
+                            <StackPanel x:Name="CubicBezierPanel" Visibility="Collapsed" Margin="0,5,0,0">
+                                <TextBlock Text="Cubic Bezier Points (X1,Y1,X2,Y2):" Margin="0,5,0,0"/>
+                                <TextBox x:Name="CubicBezierPointsBox" Text="0.25,0.1,0.25,1.0" Width="150"/>
+                            </StackPanel>
                         </StackPanel>
                     </GroupBox>
 
@@ -199,7 +204,6 @@
             <Button x:Name="CloseButton" Content="Force Close" Click="CloseButton_Click" Width="120" Height="30" Margin="5"/>
         </StackPanel>
 
-        <!-- OmenPopup control -->
         <omen:OmenPopup x:Name="TestPopup" />
     </Grid>
 </Window>

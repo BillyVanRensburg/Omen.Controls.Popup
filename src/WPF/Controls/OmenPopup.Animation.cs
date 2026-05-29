@@ -49,7 +49,7 @@ public partial class OmenPopup
     /// <param name="target">The element to animate (usually <see cref="ModalContentBorder"/> or a lightweight popup root).</param>
     /// <param name="animation">The animation type(s) to apply (fade, scale, slide).</param>
     /// <param name="durationMs">Duration in milliseconds.</param>
-    /// <param name="easing">The easing function to use.</param>
+    /// <param name="easing">The easing type to use.</param>
     private async Task AnimateEnterAsync(FrameworkElement target, CoreEnums.AnimationType animation, int durationMs, CoreEnums.EasingType easing)
     {
         EnsureTransformGroup(target);
@@ -69,7 +69,7 @@ public partial class OmenPopup
         var translate = tg.Children[1] as TranslateTransform ?? new TranslateTransform(0, 0);
 
         var duration = new Duration(TimeSpan.FromMilliseconds(durationMs));
-        var easingFunc = GetEasingFunction(easing);
+        var easingFunc = GetEasingFunction(easing, EnterCubicBezierPoints);
         var tcs = new TaskCompletionSource<bool>();
         bool completionHooked = false;
 
@@ -115,7 +115,7 @@ public partial class OmenPopup
     /// <param name="target">The element to animate.</param>
     /// <param name="animation">The animation type(s) to apply.</param>
     /// <param name="durationMs">Duration in milliseconds.</param>
-    /// <param name="easing">The easing function to use.</param>
+    /// <param name="easing">The easing type to use.</param>
     private async Task AnimateExitAsync(FrameworkElement target, CoreEnums.AnimationType animation, int durationMs, CoreEnums.EasingType easing)
     {
         EnsureTransformGroup(target);
@@ -128,7 +128,7 @@ public partial class OmenPopup
         var translate = tg.Children[1] as TranslateTransform ?? new TranslateTransform(0, 0);
 
         var duration = new Duration(TimeSpan.FromMilliseconds(durationMs));
-        var easingFunc = GetEasingFunction(easing);
+        var easingFunc = GetEasingFunction(easing, ExitCubicBezierPoints);
         var tcs = new TaskCompletionSource<bool>();
         bool completionHooked = false;
 
@@ -183,7 +183,6 @@ public partial class OmenPopup
         {
             target.RenderTransform = new TransformGroup
             {
-                // Collection expression for simplified initialization (C# 12)
                 Children = [new ScaleTransform(1, 1), new TranslateTransform(0, 0)]
             };
         }
@@ -230,12 +229,16 @@ public partial class OmenPopup
     }
 
     /// <summary>
-    /// Returns a concrete <see cref="QuadraticEase"/> easing function for the given easing type,
-    /// or <c>null</c> for linear or cubic Bézier (which requires additional handling).
+    /// Returns an easing function (<see cref="IEasingFunction"/>) for the given easing type.
+    /// For standard easings, returns a <see cref="QuadraticEase"/>.
+    /// For <see cref="CoreEnums.EasingType.CubicBezier"/>, parses the provided Bezier points string
+    /// and returns a <see cref="KeySplineEasing"/> wrapper (which implements <see cref="IEasingFunction"/>).
+    /// If parsing fails or points are not provided, returns <c>null</c> (linear easing).
     /// </summary>
     /// <param name="type">The easing type.</param>
-    /// <returns>A <see cref="QuadraticEase"/> instance or <c>null</c>.</returns>
-    private static QuadraticEase? GetEasingFunction(CoreEnums.EasingType type)
+    /// <param name="cubicBezierPoints">Optional cubic Bezier points string (format: "X1,Y1,X2,Y2").</param>
+    /// <returns>An easing function, or <c>null</c> for linear.</returns>
+    private static IEasingFunction? GetEasingFunction(CoreEnums.EasingType type, string? cubicBezierPoints = null)
     {
         return type switch
         {
@@ -243,8 +246,49 @@ public partial class OmenPopup
             CoreEnums.EasingType.EaseIn => new QuadraticEase { EasingMode = EasingMode.EaseIn },
             CoreEnums.EasingType.EaseOut => new QuadraticEase { EasingMode = EasingMode.EaseOut },
             CoreEnums.EasingType.EaseInOut => new QuadraticEase { EasingMode = EasingMode.EaseInOut },
-            CoreEnums.EasingType.CubicBezier => null,
+            CoreEnums.EasingType.CubicBezier when !string.IsNullOrWhiteSpace(cubicBezierPoints) => ParseCubicBezier(cubicBezierPoints),
             _ => null
         };
+    }
+
+    /// <summary>
+    /// Parses a cubic Bezier points string and returns a <see cref="KeySplineEasing"/>.
+    /// </summary>
+    /// <param name="points">Comma‑separated string of four double values: "X1,Y1,X2,Y2".</param>
+    /// <returns>A <see cref="KeySplineEasing"/> if parsing succeeds; otherwise <c>null</c>.</returns>
+    private static KeySplineEasing? ParseCubicBezier(string points)
+    {
+        try
+        {
+            var parts = points.Split(',');
+            if (parts.Length == 4 &&
+                double.TryParse(parts[0], out double x1) &&
+                double.TryParse(parts[1], out double y1) &&
+                double.TryParse(parts[2], out double x2) &&
+                double.TryParse(parts[3], out double y2))
+            {
+                return new KeySplineEasing(x1, y1, x2, y2);
+            }
+        }
+        catch { }
+        return null;
+    }
+
+    /// <summary>
+    /// Private wrapper class that implements <see cref="IEasingFunction"/> using a <see cref="KeySpline"/>.
+    /// </summary>
+    private class KeySplineEasing : IEasingFunction
+    {
+        private readonly KeySpline _keySpline;
+
+        public KeySplineEasing(double x1, double y1, double x2, double y2)
+        {
+            _keySpline = new KeySpline(x1, y1, x2, y2);
+        }
+
+        public double Ease(double normalizedTime)
+        {
+            return _keySpline.GetSplineProgress(normalizedTime);
+        }
     }
 }
