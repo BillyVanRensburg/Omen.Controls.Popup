@@ -183,11 +183,29 @@
                         </StackPanel>
                     </GroupBox>
 
+                    <!-- Dialog Buttons (Modal) - always visible, enabled only when Modal is selected -->
+                    <GroupBox x:Name="DialogButtonsGroup" Header="Dialog Buttons (Modal)" Margin="0,5"
+                              IsEnabled="{Binding IsChecked, ElementName=ModalRadio}">
+                        <StackPanel Margin="5">
+                            <CheckBox x:Name="ChkOK" Content="OK" IsChecked="True" Margin="0,3"/>
+                            <CheckBox x:Name="ChkCancel" Content="Cancel" IsChecked="True" Margin="0,3"/>
+                            <CheckBox x:Name="ChkYes" Content="Yes" Margin="0,3"/>
+                            <CheckBox x:Name="ChkNo" Content="No" Margin="0,3"/>
+                            <TextBlock Text="Custom Labels:" Margin="0,5,0,0"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,3">
+                                <TextBox x:Name="TxtOK" Width="60" Margin="0,0,5,0" Tag="OK" Text="OK"/>
+                                <TextBox x:Name="TxtCancel" Width="60" Margin="0,0,5,0" Tag="Cancel" Text="Cancel"/>
+                                <TextBox x:Name="TxtYes" Width="60" Margin="0,0,5,0" Tag="Yes" Text="Yes"/>
+                                <TextBox x:Name="TxtNo" Width="60" Tag="No" Text="No"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </GroupBox>
+
                     <!-- Content -->
                     <GroupBox Header="Content" Margin="0,5">
                         <StackPanel Margin="5">
                             <RadioButton x:Name="TextContentRadio" Content="Simple Text" IsChecked="True" Margin="0,3"/>
-                            <RadioButton x:Name="DialogContentRadio" Content="Dialog with OK/Cancel Buttons" Margin="0,3"/>
+                            <RadioButton x:Name="CustomContentRadio" Content="Custom Control (DialogContent)" Margin="0,3"/>
                             <TextBox x:Name="TextContentBox" Text="This is a sample popup message." Margin="0,3"/>
                         </StackPanel>
                     </GroupBox>

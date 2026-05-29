@@ -1,5 +1,8 @@
-﻿using System.Windows;
+﻿using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using CoreEnums = Omen.Controls.Popup.Core.Enums;
 
@@ -207,6 +210,76 @@ public partial class OmenPopup
         get => (string?)GetValue(ExitCubicBezierPointsProperty);
         set => SetValue(ExitCubicBezierPointsProperty, value);
     }
+
+    // ------------------------------------------------------------------------
+    // Dialog Button Properties (built‑in buttons)
+    // ------------------------------------------------------------------------
+
+    /// <summary>Represents a single dialog button with its display text and a command to close the popup.</summary>
+    public class ButtonItem
+    {
+        /// <summary>Button display text.</summary>
+        public string? Text { get; set; }
+        /// <summary>Command to execute when the button is clicked.</summary>
+        public ICommand Command { get; set; } = null!;
+    }
+
+    /// <summary>Identifies the <see cref="DialogButtons"/> dependency property.</summary>
+    public static readonly DependencyProperty DialogButtonsProperty =
+        DependencyProperty.Register(nameof(DialogButtons), typeof(CoreEnums.DialogAction), typeof(OmenPopup),
+            new PropertyMetadata(CoreEnums.DialogAction.None, OnDialogButtonsChanged));
+
+    /// <summary>
+    /// Gets or sets the buttons to display in the dialog (e.g., OK, Cancel, Yes, No).
+    /// This is a flags enumeration; combine values using bitwise OR (e.g., <c>DialogAction.OK | DialogAction.Cancel</c>).
+    /// Only used when the popup is modal and no custom content is provided.
+    /// </summary>
+    public CoreEnums.DialogAction DialogButtons
+    {
+        get => (CoreEnums.DialogAction)GetValue(DialogButtonsProperty);
+        set => SetValue(DialogButtonsProperty, value);
+    }
+
+    /// <summary>Identifies the <see cref="CustomButtonLabels"/> dependency property.</summary>
+    public static readonly DependencyProperty CustomButtonLabelsProperty =
+        DependencyProperty.Register(nameof(CustomButtonLabels), typeof(Dictionary<string, string>), typeof(OmenPopup),
+            new PropertyMetadata(null, OnDialogButtonsChanged));
+
+    /// <summary>
+    /// Gets or sets custom labels for dialog buttons. The key is the button action (e.g., "OK", "Cancel", "Yes", "No")
+    /// and the value is the displayed text. If a button is not present in this dictionary, the default label is used.
+    /// </summary>
+    public Dictionary<string, string>? CustomButtonLabels
+    {
+        get => (Dictionary<string, string>?)GetValue(CustomButtonLabelsProperty);
+        set => SetValue(CustomButtonLabelsProperty, value);
+    }
+
+    /// <summary>Identifies the <see cref="ButtonItems"/> dependency property.</summary>
+    public static readonly DependencyProperty ButtonItemsProperty =
+        DependencyProperty.Register(nameof(ButtonItems), typeof(ObservableCollection<ButtonItem>), typeof(OmenPopup),
+            new PropertyMetadata(null));
+
+    /// <summary>
+    /// Gets the collection of button items displayed in the dialog panel.
+    /// This property is updated automatically when <see cref="DialogButtons"/> or <see cref="CustomButtonLabels"/> changes.
+    /// </summary>
+    public ObservableCollection<ButtonItem>? ButtonItems
+    {
+        get => (ObservableCollection<ButtonItem>?)GetValue(ButtonItemsProperty);
+        set => SetValue(ButtonItemsProperty, value);
+    }
+
+    private static void OnDialogButtonsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        ((OmenPopup)d).OnDialogButtonsChanged();
+    }
+
+    /// <summary>
+    /// Called when <see cref="DialogButtons"/> or <see cref="CustomButtonLabels"/> changes.
+    /// Implemented in a partial class to update the button panel.
+    /// </summary>
+    partial void OnDialogButtonsChanged();
 
     #endregion
 

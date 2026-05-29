@@ -1,6 +1,7 @@
 ﻿using Omen.Controls.Popup.Core.Enums;
 using Omen.Controls.Popup.WPF.Controls;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
@@ -13,21 +14,58 @@ namespace Omen.Controls.Popup.Sample
 {
     public partial class MainWindow : Window
     {
+        private DialogAction? _lastDialogResult = null;
+
         public MainWindow()
         {
             InitializeComponent();
 
             AnchorTargetCombo.SelectionChanged += AnchorTargetCombo_SelectionChanged;
             OverlayBrushCombo.SelectionChanged += OverlayBrushCombo_SelectionChanged;
-            EasingCombo.SelectionChanged += EasingCombo_SelectionChanged; // Add this
+            EasingCombo.SelectionChanged += EasingCombo_SelectionChanged;
 
             if (AnchorElementCombo.Items.Count > 0)
                 AnchorElementCombo.SelectedIndex = 0;
 
             if (TestPopup != null)
-                TestPopup.Closed += (s, e) => StatusText.Text = "Popup closed at " + DateTime.Now.ToLongTimeString();
+            {
+                // Store the result when a built‑in dialog button is clicked
+                TestPopup.DialogClosed += (s, result) =>
+                {
+                    _lastDialogResult = result;
+                };
 
-            this.PreviewKeyDown += (s, e) =>
+                // Unified closed handler
+                TestPopup.Closed += (s, e) =>
+                {
+                    StatusText.Text = "Popup closed at " + DateTime.Now.ToLongTimeString();
+
+                    string message = null;
+
+                    // Check if the custom control (DialogContent) was used
+                    if (TestPopup.Content is DialogContent dialog)
+                    {
+                        string name = dialog.EnteredName;
+                        if (!string.IsNullOrWhiteSpace(name))
+                            message = $"Name entered: {name}";
+                    }
+                    // Otherwise, check if a built‑in button result was stored
+                    else if (_lastDialogResult.HasValue)
+                    {
+                        message = $"You clicked: {_lastDialogResult.Value}";
+                        _lastDialogResult = null; // reset
+                    }
+
+                    if (!string.IsNullOrEmpty(message))
+                    {
+                        Dispatcher.Invoke(() =>
+                            MessageBox.Show(message, "Popup Result", MessageBoxButton.OK, MessageBoxImage.Information)
+                        );
+                    }
+                };
+            }
+
+            PreviewKeyDown += (s, e) =>
             {
                 if (e.Key == Key.Escape && TestPopup != null && TestPopup.IsOpen && TestPopup.CanCloseOnEscape)
                     _ = TestPopup.CloseAsync();
@@ -37,7 +75,7 @@ namespace Omen.Controls.Popup.Sample
         private void OverlayBrushCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             var tag = ((ComboBoxItem)OverlayBrushCombo.SelectedItem)?.Tag as string;
-            CustomOverlayPanel.Visibility = (tag == "Custom") ? Visibility.Visible : Visibility.Collapsed;
+            CustomOverlayPanel.Visibility = tag == "Custom" ? Visibility.Visible : Visibility.Collapsed;
         }
 
         private void AnchorTargetCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -56,7 +94,7 @@ namespace Omen.Controls.Popup.Sample
             {
                 var tag = item.Tag as string;
                 if (CubicBezierPanel != null)
-                    CubicBezierPanel.Visibility = (tag == "CubicBezier") ? Visibility.Visible : Visibility.Collapsed;
+                    CubicBezierPanel.Visibility = tag == "CubicBezier" ? Visibility.Visible : Visibility.Collapsed;
             }
         }
 
@@ -66,27 +104,21 @@ namespace Omen.Controls.Popup.Sample
             {
                 if (TestPopup == null) return;
 
-                // Ensure any previously open popup is closed before we reconfigure
                 if (TestPopup.IsOpen)
                     await TestPopup.CloseAsync();
 
-                // Small delay to allow clean-up (helps with layout)
                 await Task.Delay(50);
 
                 bool isModal = ModalRadio.IsChecked == true;
                 TestPopup.IsModal = isModal;
 
-                // Positioning properties (common)
                 string anchorTag = ((ComboBoxItem)AnchorTargetCombo.SelectedItem)?.Tag as string ?? "ParentContainer";
                 TestPopup.AnchorTarget = ParseAnchorTarget(anchorTag);
 
                 if (TestPopup.AnchorTarget == CoreEnums.AnchorTarget.UiElement)
                 {
                     var selected = AnchorElementCombo.SelectedItem as ComboBoxItem;
-                    if (selected?.Tag is FrameworkElement element)
-                        TestPopup.AnchorElement = element;
-                    else
-                        TestPopup.AnchorElement = LeftElement;
+                    TestPopup.AnchorElement = selected?.Tag as FrameworkElement ?? LeftElement;
                 }
                 else
                 {
@@ -115,21 +147,14 @@ namespace Omen.Controls.Popup.Sample
                 TestPopup.CanCloseOnEscape = EscapeCheckBox.IsChecked == true;
 
                 TestPopup.ShowCloseButton = ShowCloseButtonCheckBox.IsChecked == true;
-                if (CustomCloseButtonCheckBox.IsChecked == true)
-                {
-                    var template = this.TryFindResource("CustomCloseButtonTemplate") as ControlTemplate;
-                    TestPopup.CloseButtonTemplate = template;
-                }
-                else
-                {
-                    TestPopup.CloseButtonTemplate = null;
-                }
+                TestPopup.CloseButtonTemplate = CustomCloseButtonCheckBox.IsChecked == true
+                    ? this.TryFindResource("CustomCloseButtonTemplate") as ControlTemplate
+                    : null;
 
                 var selectedOverlay = ((ComboBoxItem)OverlayBrushCombo.SelectedItem)?.Tag as string;
-                if (selectedOverlay == "Custom")
-                    TestPopup.OverlayBrush = (Brush)new BrushConverter().ConvertFromString(CustomOverlayBrushBox.Text);
-                else
-                    TestPopup.OverlayBrush = (Brush)new BrushConverter().ConvertFromString(selectedOverlay ?? "#80000000");
+                TestPopup.OverlayBrush = selectedOverlay == "Custom"
+                    ? (Brush)new BrushConverter().ConvertFromString(CustomOverlayBrushBox.Text)
+                    : (Brush)new BrushConverter().ConvertFromString(selectedOverlay ?? "#80000000");
 
                 string enterTag = (EnterAnimationCombo?.SelectedItem as ComboBoxItem)?.Tag as string ?? "None";
                 string exitTag = (ExitAnimationCombo?.SelectedItem as ComboBoxItem)?.Tag as string ?? "None";
@@ -144,7 +169,6 @@ namespace Omen.Controls.Popup.Sample
                 TestPopup.EnterEasing = ParseEasing(easingTag);
                 TestPopup.ExitEasing = ParseEasing(easingTag);
 
-                // Cubic Bezier points
                 if (easingTag == "CubicBezier")
                 {
                     TestPopup.EnterCubicBezierPoints = CubicBezierPointsBox.Text;
@@ -156,26 +180,41 @@ namespace Omen.Controls.Popup.Sample
                     TestPopup.ExitCubicBezierPoints = null;
                 }
 
-                // Content – always create a fresh instance for dialog
-                if (DialogContentRadio.IsChecked == true)
+                // Dialog buttons (only for modal)
+                if (isModal)
                 {
-                    // Clear old content and force layout to avoid reuse issues
-                    TestPopup.Content = null;
-                    await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Loaded);
-                    TestPopup.Content = new DialogContent();
+                    DialogAction buttons = DialogAction.None;
+                    if (ChkOK.IsChecked == true) buttons |= DialogAction.OK;
+                    if (ChkCancel.IsChecked == true) buttons |= DialogAction.Cancel;
+                    if (ChkYes.IsChecked == true) buttons |= DialogAction.Yes;
+                    if (ChkNo.IsChecked == true) buttons |= DialogAction.No;
+                    TestPopup.DialogButtons = buttons;
+
+                    var labels = new Dictionary<string, string>();
+                    if (ChkOK.IsChecked == true) labels["OK"] = TxtOK.Text;
+                    if (ChkCancel.IsChecked == true) labels["Cancel"] = TxtCancel.Text;
+                    if (ChkYes.IsChecked == true) labels["Yes"] = TxtYes.Text;
+                    if (ChkNo.IsChecked == true) labels["No"] = TxtNo.Text;
+                    TestPopup.CustomButtonLabels = labels;
                 }
                 else
                 {
-                    TestPopup.Content = TextContentBox?.Text ?? string.Empty;
+                    TestPopup.DialogButtons = DialogAction.None;
+                    TestPopup.CustomButtonLabels = null;
                 }
 
+                // Content
+                TestPopup.Content = CustomContentRadio.IsChecked == true
+                    ? new DialogContent()
+                    : (TextContentBox?.Text ?? string.Empty);
+
                 bool useAsync = AsyncCheckBox?.IsChecked == true;
-                StatusText.Text = "Showing popup... (using " + (useAsync ? "async/await" : "fire-and-forget") + ")";
+                StatusText.Text = $"Showing popup... (using {(useAsync ? "async/await" : "fire-and-forget")})";
 
                 if (useAsync)
                 {
                     await TestPopup.ShowAsync();
-                    StatusText.Text = "Popup closed (after await) at " + DateTime.Now.ToLongTimeString();
+                    StatusText.Text = $"Popup closed (after await) at {DateTime.Now.ToLongTimeString()}";
                 }
                 else
                 {
@@ -193,8 +232,8 @@ namespace Omen.Controls.Popup.Sample
             }
             catch (Exception ex)
             {
-                Debug.WriteLine("ShowButton_Click failed: " + ex);
-                MessageBox.Show("Error preparing popup: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                Debug.WriteLine($"ShowButton_Click failed: {ex}");
+                MessageBox.Show($"Error preparing popup: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -205,7 +244,7 @@ namespace Omen.Controls.Popup.Sample
             StatusText.Text = "Force close requested.";
         }
 
-        private AnimationType ParseAnimation(string tag)
+        private static AnimationType ParseAnimation(string tag)
         {
             if (string.IsNullOrWhiteSpace(tag)) return AnimationType.None;
             var parts = tag.Split(',');
@@ -227,7 +266,7 @@ namespace Omen.Controls.Popup.Sample
             return result;
         }
 
-        private EasingType ParseEasing(string tag)
+        private static EasingType ParseEasing(string tag)
         {
             return tag switch
             {
@@ -240,7 +279,7 @@ namespace Omen.Controls.Popup.Sample
             };
         }
 
-        private CoreEnums.AnchorTarget ParseAnchorTarget(string tag)
+        private static CoreEnums.AnchorTarget ParseAnchorTarget(string tag)
         {
             return tag switch
             {
@@ -252,7 +291,7 @@ namespace Omen.Controls.Popup.Sample
             };
         }
 
-        private CoreEnums.PopupAlignment ParseAlignment(string tag)
+        private static CoreEnums.PopupAlignment ParseAlignment(string tag)
         {
             return tag switch
             {

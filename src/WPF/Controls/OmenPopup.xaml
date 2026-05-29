@@ -4,67 +4,69 @@
              x:Name="Root"
              HorizontalAlignment="Stretch"
              VerticalAlignment="Stretch">
-    <UserControl.Resources>
-        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+	<UserControl.Resources>
+		<BooleanToVisibilityConverter x:Key="BoolToVisibility" />
 
-        <!-- Modern default close button template -->
-        <ControlTemplate x:Key="DefaultCloseButtonTemplate" TargetType="Button">
-            <Border x:Name="Border" Background="#E0E0E0" Width="30" Height="30" CornerRadius="15" Cursor="Hand">
-                <TextBlock Text="✕" FontSize="14" Foreground="#666666" HorizontalAlignment="Center" VerticalAlignment="Center" FontFamily="Segoe UI"/>
-            </Border>
-            <ControlTemplate.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter TargetName="Border" Property="Background" Value="#CCCCCC"/>
-                </Trigger>
-                <Trigger Property="IsPressed" Value="True">
-                    <Setter TargetName="Border" Property="Background" Value="#AAAAAA"/>
-                </Trigger>
-            </ControlTemplate.Triggers>
-        </ControlTemplate>
+		<!-- Modern default close button template -->
+		<ControlTemplate x:Key="DefaultCloseButtonTemplate" TargetType="Button">
+			<Border x:Name="Border" Background="#E0E0E0" Width="30" Height="30" CornerRadius="15" Cursor="Hand">
+				<TextBlock Text="✕" FontSize="14" Foreground="#666666" HorizontalAlignment="Center" VerticalAlignment="Center" FontFamily="Segoe UI"/>
+			</Border>
+			<ControlTemplate.Triggers>
+				<Trigger Property="IsMouseOver" Value="True">
+					<Setter TargetName="Border" Property="Background" Value="#CCCCCC"/>
+				</Trigger>
+				<Trigger Property="IsPressed" Value="True">
+					<Setter TargetName="Border" Property="Background" Value="#AAAAAA"/>
+				</Trigger>
+			</ControlTemplate.Triggers>
+		</ControlTemplate>
 
-        <!-- Modern custom close button template -->
-        <ControlTemplate x:Key="CustomCloseButtonTemplate" TargetType="Button">
-            <Border x:Name="Border" Background="#0078D4" Width="32" Height="32" CornerRadius="16" Cursor="Hand">
-                <TextBlock Text="✕" FontSize="16" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" FontFamily="Segoe UI"/>
-            </Border>
-            <ControlTemplate.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter TargetName="Border" Property="Background" Value="#106EBE"/>
-                </Trigger>
-                <Trigger Property="IsPressed" Value="True">
-                    <Setter TargetName="Border" Property="Background" Value="#005A9E"/>
-                </Trigger>
-            </ControlTemplate.Triggers>
-        </ControlTemplate>
-    </UserControl.Resources>
+		<!-- Modern custom close button template -->
+		<ControlTemplate x:Key="CustomCloseButtonTemplate" TargetType="Button">
+			<Border x:Name="Border" Background="#0078D4" Width="32" Height="32" CornerRadius="16" Cursor="Hand">
+				<TextBlock Text="✕" FontSize="16" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" FontFamily="Segoe UI"/>
+			</Border>
+			<ControlTemplate.Triggers>
+				<Trigger Property="IsMouseOver" Value="True">
+					<Setter TargetName="Border" Property="Background" Value="#106EBE"/>
+				</Trigger>
+				<Trigger Property="IsPressed" Value="True">
+					<Setter TargetName="Border" Property="Background" Value="#005A9E"/>
+				</Trigger>
+			</ControlTemplate.Triggers>
+		</ControlTemplate>
+	</UserControl.Resources>
 
-    <Grid x:Name="OverlayGrid" 
-          Background="{Binding OverlayBrush, ElementName=Root, FallbackValue=#80000000}" 
+	<Grid x:Name="OverlayGrid"
+          Background="{Binding OverlayBrush, ElementName=Root, FallbackValue=#80000000}"
           Visibility="Collapsed"
           HorizontalAlignment="Stretch"
           VerticalAlignment="Stretch">
-        <Border x:Name="ModalContentBorder" 
-                Background="White" 
-                BorderBrush="DarkGray" 
+		<Border x:Name="ModalContentBorder"
+                Background="White"
+                BorderBrush="DarkGray"
                 BorderThickness="1"
-                CornerRadius="8" 
+                CornerRadius="8"
                 Padding="10"
-                HorizontalAlignment="Center" 
+                HorizontalAlignment="Center"
                 VerticalAlignment="Center"
                 RenderTransformOrigin="0.5,0.5">
-            <Border.RenderTransform>
-                <TransformGroup>
-                    <ScaleTransform ScaleX="1" ScaleY="1"/>
-                    <TranslateTransform X="0" Y="0"/>
-                </TransformGroup>
-            </Border.RenderTransform>
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
+			<Border.RenderTransform>
+				<TransformGroup>
+					<ScaleTransform ScaleX="1" ScaleY="1"/>
+					<TranslateTransform X="0" Y="0"/>
+				</TransformGroup>
+			</Border.RenderTransform>
+			<Grid>
+				<Grid.RowDefinitions>
+					<RowDefinition Height="Auto"/>
+					<RowDefinition Height="*"/>
+					<RowDefinition Height="Auto"/>
+				</Grid.RowDefinitions>
 
-                <Button x:Name="CloseButton"
+				<!-- Close button row -->
+				<Button x:Name="CloseButton"
                         Grid.Row="0"
                         HorizontalAlignment="Right"
                         Margin="0,5,5,0"
@@ -73,8 +75,33 @@
                         Visibility="{Binding ShowCloseButton, ElementName=Root, Converter={StaticResource BoolToVisibility}}"
                         Template="{Binding CloseButtonTemplate, ElementName=Root, TargetNullValue={StaticResource DefaultCloseButtonTemplate}}" />
 
-                <ContentPresenter Grid.Row="1" Content="{Binding Content, ElementName=Root}" />
-            </Grid>
-        </Border>
-    </Grid>
+				<!-- User content -->
+				<ContentPresenter Grid.Row="1"
+                                  Content="{Binding Content, ElementName=Root}" />
+
+				<!-- Dialog buttons panel -->
+				<ItemsControl x:Name="DialogButtonsPanel"
+                              Grid.Row="2"
+                              HorizontalAlignment="Center"
+                              Margin="0,10,0,0"
+                              Visibility="Collapsed"
+                              ItemsSource="{Binding ButtonItems, ElementName=Root}"
+                              VerticalAlignment="Center">
+					<ItemsControl.ItemsPanel>
+						<ItemsPanelTemplate>
+							<StackPanel Orientation="Horizontal"/>
+						</ItemsPanelTemplate>
+					</ItemsControl.ItemsPanel>
+					<ItemsControl.ItemTemplate>
+						<DataTemplate>
+							<Button Content="{Binding Text}"
+                                    Command="{Binding Command}"
+                                    Width="80" Height="30"
+                                    Margin="5,0"/>
+						</DataTemplate>
+					</ItemsControl.ItemTemplate>
+				</ItemsControl>
+			</Grid>
+		</Border>
+	</Grid>
 </UserControl>
