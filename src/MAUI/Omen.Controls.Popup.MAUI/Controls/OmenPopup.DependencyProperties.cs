@@ -31,7 +31,8 @@ public partial class OmenPopup
     public static readonly BindableProperty ContentProperty =
         BindableProperty.Create(nameof(Content), typeof(object), typeof(OmenPopup), null);
 
-    public object Content
+    // Added 'new' keyword to hide base ContentView.Content property
+    public new object Content
     {
         get => GetValue(ContentProperty);
         set => SetValue(ContentProperty, value);

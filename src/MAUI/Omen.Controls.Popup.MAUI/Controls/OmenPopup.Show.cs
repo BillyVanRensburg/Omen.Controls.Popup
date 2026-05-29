@@ -1,7 +1,10 @@
-﻿using System.Threading.Tasks;
-using Microsoft.Maui.Controls;
-using Omen.Controls.Popup.Core.Models;
+﻿using Microsoft.Maui.Controls;
 using Omen.Controls.Popup.Core.Enums;
+using Omen.Controls.Popup.Core.Events;
+using Omen.Controls.Popup.Core.Models;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Omen.Controls.Popup.MAUI.Controls;
 
@@ -12,32 +15,66 @@ public partial class OmenPopup
         if (_host == null) return;
         if (IsOpen) return;
 
-        Opening?.Invoke(this, EventArgs.Empty);
+        // Raise Opening event with cancellation support
+        var openingArgs = new OpeningCancelEventArgs();
+        Opening?.Invoke(this, openingArgs);
+        if (openingArgs.Cancel) return;
 
         var request = BuildRequest();
 
-        if (IsModal)
-        {
-            await ShowModalAsync(request);
-        }
-        else
-        {
-            await ShowLightweightAsync(request);
-        }
-    }
+        // Wire host events to control events (if not already wired)
+        _host.Opening -= OnHostOpening;
+        _host.Opening += OnHostOpening;
+        _host.Opened -= OnHostOpened;
+        _host.Opened += OnHostOpened;
+        _host.Closing -= OnHostClosing;
+        _host.Closing += OnHostClosing;
+        _host.Closed -= OnHostClosed;
+        _host.Closed += OnHostClosed;
 
-    private async Task ShowModalAsync(PopupRequest request)
-    {
-        await _host!.ShowAsync(request);
+        // Show the popup (host handles modal/lightweight via request.IsModal)
+        await _host.ShowAsync(request);
         IsOpen = true;
         Opened?.Invoke(this, EventArgs.Empty);
     }
 
-    private async Task ShowLightweightAsync(PopupRequest request)
+    public async Task<DialogClosedEventArgs> ShowDialogAsync()
     {
-        // Lightweight popup - small floating popup without overlay
-        // For now, treat like modal but with different styling
-        await ShowModalAsync(request);
+        _dialogTcs = new TaskCompletionSource<DialogAction>();
+        await ShowAsync();
+        var result = await _dialogTcs.Task;
+        return new DialogClosedEventArgs { Result = result };
+    }
+
+    private Task OnHostOpening(CancellableEventArgs args)
+    {
+        var cancelArgs = new OpeningCancelEventArgs();
+        Opening?.Invoke(this, cancelArgs);
+        if (cancelArgs.Cancel) args.Cancel = true;
+        return Task.CompletedTask;
+    }
+
+    private Task OnHostOpened()
+    {
+        Opened?.Invoke(this, EventArgs.Empty);
+        return Task.CompletedTask;
+    }
+
+    private Task OnHostClosing(CancellableEventArgs args)
+    {
+        var cancelArgs = new ClosingCancelEventArgs();
+        Closing?.Invoke(this, cancelArgs);
+        if (cancelArgs.Cancel) args.Cancel = true;
+        return Task.CompletedTask;
+    }
+
+    private Task OnHostClosed(DialogAction? result, object? userData)
+    {
+        IsOpen = false;
+        var dialogArgs = new DialogClosedEventArgs { Result = result, UserData = userData };
+        DialogClosed?.Invoke(this, dialogArgs);
+        _dialogTcs?.TrySetResult(result ?? DialogAction.None);
+        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -51,21 +88,18 @@ public partial class OmenPopup
 
         try
         {
-            // Fade animation
             if ((EnterAnimation & AnimationType.Fade) != 0)
             {
                 target.Opacity = 0;
                 tasks.Add(target.FadeToAsync(1, (uint)duration));
             }
 
-            // Scale animation
             if ((EnterAnimation & AnimationType.Scale) != 0)
             {
                 target.Scale = 0.8;
                 tasks.Add(target.ScaleToAsync(1, (uint)duration, GetEasingFunction(EnterEasing)));
             }
 
-            // Slide animation
             if ((EnterAnimation & AnimationType.SlideLeft) != 0)
                 tasks.Add(target.TranslateToAsync(-100, 0, (uint)duration, GetEasingFunction(EnterEasing)));
             else if ((EnterAnimation & AnimationType.SlideRight) != 0)
@@ -95,15 +129,12 @@ public partial class OmenPopup
 
         try
         {
-            // Fade animation
             if ((ExitAnimation & AnimationType.Fade) != 0)
                 tasks.Add(target.FadeToAsync(0, (uint)duration));
 
-            // Scale animation
             if ((ExitAnimation & AnimationType.Scale) != 0)
                 tasks.Add(target.ScaleToAsync(0.8, (uint)duration, GetEasingFunction(ExitEasing)));
 
-            // Slide animation
             if ((ExitAnimation & AnimationType.SlideLeft) != 0)
                 tasks.Add(target.TranslateToAsync(-100, 0, (uint)duration, GetEasingFunction(ExitEasing)));
             else if ((ExitAnimation & AnimationType.SlideRight) != 0)
@@ -130,7 +161,7 @@ public partial class OmenPopup
             EasingType.EaseIn => Easing.CubicIn,
             EasingType.EaseOut => Easing.CubicOut,
             EasingType.EaseInOut => Easing.CubicInOut,
-            EasingType.CubicBezier => Easing.CubicInOut, // Fallback for cubic bezier
+            EasingType.CubicBezier => Easing.CubicInOut,
             _ => Easing.Linear
         };
     }
@@ -142,8 +173,9 @@ public partial class OmenPopup
             Content = this.Content,
             IsModal = this.IsModal,
             CloseOnOutsideClick = this.CloseOnOutsideClick,
-            OverlayBrush = this.OverlayBrush?.ToString(),  // TODO: change PopupRequest.OverlayBrush to Brush type
+            ShowCloseButton = this.ShowCloseButton,          // Added
             CloseButtonTemplate = this.CloseButtonTemplate,
+            OverlayBrush = this.OverlayBrush?.ToString(),
             EnterAnimation = this.EnterAnimation,
             ExitAnimation = this.ExitAnimation,
             EnterDuration = this.EnterDuration,

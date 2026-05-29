@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Microsoft.Maui.Controls;
 
 namespace Omen.Controls.Popup.MAUI.Controls;
@@ -9,7 +10,9 @@ public partial class OmenPopup
     {
         if (!IsOpen) return;
 
-        Closing?.Invoke(this, EventArgs.Empty);
+        var args = new ClosingCancelEventArgs();
+        Closing?.Invoke(this, args);
+        if (args.Cancel) return;
 
         if (_host != null)
             await _host.CloseAsync();
@@ -18,26 +21,11 @@ public partial class OmenPopup
     }
 
     /// <summary>
-    /// Shows the popup as a dialog and waits for the user to make a choice
+    /// Closes the popup with a dialog result (used by dialog buttons)
     /// </summary>
-    public async Task<DialogClosedEventArgs> ShowDialogAsync()
+    internal void CloseWithResult(Core.Enums.DialogAction result)
     {
-        _dialogTcs = new TaskCompletionSource<Core.Enums.DialogAction>();
-
-        var request = BuildRequest();
-        if (IsModal)
-        {
-            await ShowModalAsync(request);
-        }
-        else
-        {
-            await ShowLightweightAsync(request);
-        }
-
-        var result = await _dialogTcs.Task;
-        var args = new DialogClosedEventArgs { Result = result };
-        DialogClosed?.Invoke(this, args);
-
-        return args;
+        _dialogTcs?.TrySetResult(result);
+        _ = CloseAsync();
     }
 }
