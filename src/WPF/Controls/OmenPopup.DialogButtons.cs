@@ -66,12 +66,15 @@ public partial class OmenPopup
     }
 
     /// <summary>
-    /// Closes the popup and raises the <see cref="DialogClosed"/> event with the selected result.
+    /// Closes the popup and raises the <see cref="DialogClosed"/> event with the selected result,
+    /// and completes the <see cref="_dialogTcs"/> if it exists.
     /// </summary>
     /// <param name="result">The dialog result to return.</param>
     private void CloseWithResult(CoreEnums.DialogAction result)
     {
         DialogClosed?.Invoke(this, result);
+        if (_dialogTcs != null && !_dialogTcs.Task.IsCompleted)
+            _dialogTcs.SetResult(result);
         _ = CloseAsync();
     }
 

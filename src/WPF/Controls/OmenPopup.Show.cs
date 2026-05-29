@@ -470,4 +470,31 @@ public partial class OmenPopup
         }
         return false;
     }
+
+    /// <summary>
+    /// Shows the popup as a modal dialog and returns a <see cref="CoreEnums.DialogAction"/> result.
+    /// </summary>
+    /// <returns>
+    /// A task that completes when the popup is closed, with the result of the user's action
+    /// (OK, Cancel, Yes, No, or None). The result is determined by the built‑in button clicked,
+    /// or by Escape/overlay click (which returns None).
+    /// </returns>
+    public async Task<CoreEnums.DialogAction> ShowDialogAsync()
+    {
+        if (IsOpen) return CoreEnums.DialogAction.None;
+
+        // Ensure the popup is modal
+        IsModal = true;
+
+        // Create a new completion source for this dialog session
+        _dialogTcs = new TaskCompletionSource<CoreEnums.DialogAction>();
+
+        // Show the popup (asynchronous)
+        await ShowAsync();
+
+        // Wait for the result – will be set by either:
+        // - CloseWithResult (when a built‑in button is clicked)
+        // - CloseAsync (when closed via Escape or overlay click)
+        return await _dialogTcs.Task;
+    }
 }

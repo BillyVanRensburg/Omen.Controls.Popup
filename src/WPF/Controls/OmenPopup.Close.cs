@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using CoreEnums = Omen.Controls.Popup.Core.Enums;
 
 namespace Omen.Controls.Popup.WPF.Controls;
 
@@ -16,8 +17,8 @@ public partial class OmenPopup
     public event EventHandler? Closed;
 
     /// <summary>
-    /// Closes the popup asynchronously. For modal popups, restores focus to the previously focused element.
-    /// For lightweight popups, also detaches the focus trapping handler before restoring focus.
+    /// Closes the popup asynchronously. For modal popups, completes the <see cref="_dialogTcs"/>
+    /// if it hasn't been completed already (default result is <see cref="CoreEnums.DialogAction.None"/>).
     /// </summary>
     public async Task CloseAsync()
     {
@@ -25,6 +26,10 @@ public partial class OmenPopup
 
         if (IsModal)
         {
+            // Complete the TCS if it hasn't been completed yet (e.g., closed via Escape or overlay)
+            if (_dialogTcs != null && !_dialogTcs.Task.IsCompleted)
+                _dialogTcs.SetResult(CoreEnums.DialogAction.None);
+
             await AnimateExitAsync(ModalContentBorder, ExitAnimation, ExitDuration, ExitEasing);
             ResetTransforms(ModalContentBorder);
             ModalContentBorder.Margin = new Thickness(0);
@@ -64,7 +69,6 @@ public partial class OmenPopup
     /// <summary>
     /// Handles the Escape key to close the popup if <see cref="CanCloseOnEscape"/> is <c>true</c>.
     /// </summary>
-    /// <param name="e">Key event arguments.</param>
     protected override void OnPreviewKeyDown(KeyEventArgs e)
     {
         if (e.Key == Key.Escape && IsOpen && CanCloseOnEscape)

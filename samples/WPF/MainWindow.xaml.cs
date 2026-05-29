@@ -213,11 +213,22 @@ namespace Omen.Controls.Popup.Sample
 
                 if (useAsync)
                 {
-                    await TestPopup.ShowAsync();
-                    StatusText.Text = $"Popup closed (after await) at {DateTime.Now.ToLongTimeString()}";
+                    if (isModal)
+                    {
+                        // Use ShowDialogAsync to get the button result
+                        DialogAction result = await TestPopup.ShowDialogAsync();
+                        StatusText.Text = $"Popup closed (after await) with result: {result} at {DateTime.Now.ToLongTimeString()}";
+                    }
+                    else
+                    {
+                        // Lightweight: use ShowAsync (no result)
+                        await TestPopup.ShowAsync();
+                        StatusText.Text = $"Popup closed (after await) at {DateTime.Now.ToLongTimeString()}";
+                    }
                 }
                 else
                 {
+                    // Fire-and-forget: no result captured
                     _ = TestPopup.ShowAsync().ContinueWith(t =>
                     {
                         if (t.IsFaulted)
@@ -227,7 +238,7 @@ namespace Omen.Controls.Popup.Sample
                             Dispatcher.Invoke(() => StatusText.Text = "Popup show failed (fire-and-forget).");
                         }
                     });
-                    StatusText.Text = "Popup shown (fire-and-forget). Will close when user action occurs.";
+                    StatusText.Text = "Popup shown (fire-and-forget). Will close when user action occurs. No result captured.";
                 }
             }
             catch (Exception ex)
