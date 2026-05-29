@@ -311,9 +311,20 @@ public partial class OmenPopup
             var window = Window.GetWindow(this);
             if (window == null) return;
 
+            // Get the window's content element to determine client area size
+            var windowContent = window.Content as FrameworkElement;
+            if (windowContent == null) return;
+
+            // Force layout to get actual content size
+            windowContent.UpdateLayout();
+            double clientWidth = windowContent.ActualWidth;
+            double clientHeight = windowContent.ActualHeight;
+
+            // Fallback to window size if content size is still zero
+            if (clientWidth <= 0) clientWidth = window.ActualWidth;
+            if (clientHeight <= 0) clientHeight = window.ActualHeight;
+
             var windowPos = window.PointToScreen(new System.Windows.Point(0, 0));
-            double clientWidth = window.ActualWidth;
-            double clientHeight = window.ActualHeight;
 
             double x = 0, y = 0;
             switch (Alignment)
@@ -374,6 +385,7 @@ public partial class OmenPopup
         }
         else
         {
+            // Existing logic for other anchor targets (unchanged)
             CoreRect? anchorRect = null;
             switch (AnchorTarget)
             {
