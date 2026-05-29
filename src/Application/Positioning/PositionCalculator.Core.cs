@@ -24,26 +24,14 @@ public static partial class PositionCalculator
         Size popupSize,
         Rectangle containerBounds)
     {
-        Point position;
-
-        // Special case: ParentContainer – center within the container bounds
-        if (request.AnchorTarget == AnchorTarget.ParentContainer)
-        {
-            double x = containerBounds.Left + (containerBounds.Width - popupSize.Width) / 2;
-            double y = containerBounds.Top + (containerBounds.Height - popupSize.Height) / 2;
-            position = new Point(x, y);
-            if (request.AutoFlip)
-                position = ApplyAutoFlip(position, popupSize, containerBounds);
-            return position;
-        }
-
-        // Determine the anchor point (reference point) on the target
+        // Determine the anchor point (reference point) on the target.
+        // The anchor point is based on the anchorRect (if provided) and the alignment.
         var anchorPoint = GetAnchorPoint(request, anchorRect, popupSize);
 
-        // Align the popup relative to the anchor point
-        position = AlignPopup(anchorPoint, popupSize, request.Alignment, request.Offset);
+        // Align the popup relative to the anchor point.
+        var position = AlignPopup(anchorPoint, popupSize, request.Alignment, request.Offset);
 
-        // Apply auto‑flip to keep the popup inside the container bounds
+        // Apply auto‑flip to keep the popup inside the container bounds.
         if (request.AutoFlip)
             position = ApplyAutoFlip(position, popupSize, containerBounds);
 

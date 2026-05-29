@@ -18,12 +18,12 @@ using WpfPopup = System.Windows.Controls.Primitives.Popup;
 namespace Omen.Controls.Popup.WPF.Controls;
 
 /// <summary>
-/// Partial class containing the ShowAsync method and its modal/lightweight implementations.
+/// Partial class containing the <see cref="ShowAsync"/> method and its modal/lightweight implementations.
 /// </summary>
 public partial class OmenPopup
 {
     /// <summary>
-    /// Shows the popup asynchronously, either as modal or lightweight based on <see cref="IsModal"/>.
+    /// Shows the popup asynchronously. The behavior (modal or lightweight) is determined by <see cref="IsModal"/>.
     /// </summary>
     public async Task ShowAsync()
     {
@@ -35,41 +35,33 @@ public partial class OmenPopup
             await ShowLightweightAsync();
     }
 
-    // ------------------------------------------------------------
-    // Modal (overlay) popup with positioning
-    // ------------------------------------------------------------
+    // ============================================================================================
+    // Modal (overlay) popup
+    // ============================================================================================
 
-    /// <summary>
-    /// Displays the popup as a modal (overlay) popup, applying positioning based on <see cref="ModalAnchorTarget"/>,
-    /// alignment, offset, and auto‑flip. Also handles the enter animation and initial transform states.
-    /// </summary>
     private async Task ShowModalAsync()
     {
         EnsureTransformGroup(ModalContentBorder);
 
-        // Animation start state (fade starts at 0 if Fade flag is set)
         ModalContentBorder.Opacity = ((EnterAnimation & CoreEnums.AnimationType.Fade) != 0) ? 0.0 : 1.0;
 
-        var tg = ModalContentBorder.RenderTransform as TransformGroup;
-        if (tg == null || tg.Children.Count < 2)
+        if (ModalContentBorder.RenderTransform is not TransformGroup { Children.Count: >= 2 } tg)
             throw new InvalidOperationException("ModalContentBorder must have a TransformGroup with ScaleTransform and TranslateTransform.");
 
-        var scale = tg.Children[0] as ScaleTransform ?? new ScaleTransform(1, 1);
-        var translate = tg.Children[1] as TranslateTransform ?? new TranslateTransform(0, 0);
+        var scaleTransform = tg.Children[0] as ScaleTransform ?? new ScaleTransform(1, 1);
+        var translateTransform = tg.Children[1] as TranslateTransform ?? new TranslateTransform(0, 0);
 
-        // Set initial scale for Scale animation
         if ((EnterAnimation & CoreEnums.AnimationType.Scale) != 0)
         {
-            scale.ScaleX = 0.8;
-            scale.ScaleY = 0.8;
+            scaleTransform.ScaleX = 0.8;
+            scaleTransform.ScaleY = 0.8;
         }
         else
         {
-            scale.ScaleX = 1;
-            scale.ScaleY = 1;
+            scaleTransform.ScaleX = 1;
+            scaleTransform.ScaleY = 1;
         }
 
-        // Compute initial slide offsets
         double startX = 0, startY = 0;
         double width = ModalContentBorder.ActualWidth > 0 ? ModalContentBorder.ActualWidth : ModalContentBorder.DesiredSize.Width;
         double height = ModalContentBorder.ActualHeight > 0 ? ModalContentBorder.ActualHeight : ModalContentBorder.DesiredSize.Height;
@@ -82,12 +74,11 @@ public partial class OmenPopup
             startY = -Math.Max(1, height);
         else if ((EnterAnimation & CoreEnums.AnimationType.SlideBottom) != 0)
             startY = Math.Max(1, height);
-        translate.X = startX;
-        translate.Y = startY;
+        translateTransform.X = startX;
+        translateTransform.Y = startY;
 
         await EnsureTargetHasSize(ModalContentBorder);
 
-        // Determine actual popup size (fallback to desired size or defaults)
         double popupWidth = ModalContentBorder.ActualWidth;
         double popupHeight = ModalContentBorder.ActualHeight;
         if (popupWidth <= 0) popupWidth = ModalContentBorder.DesiredSize.Width;
@@ -95,87 +86,130 @@ public partial class OmenPopup
         if (popupWidth <= 0) popupWidth = 200;
         if (popupHeight <= 0) popupHeight = 100;
 
-        var screenBounds = GetScreenBounds();
-
-        // Special handling for mouse cursor (direct calculation)
-        if (ModalAnchorTarget == CoreEnums.AnchorTarget.MouseCursor)
+        if (AnchorTarget == CoreEnums.AnchorTarget.ParentContainer)
         {
-            var mainWin = System.Windows.Application.Current.MainWindow;
-            var mousePos = Mouse.GetPosition(mainWin);
-            var mouseScreen = mainWin.PointToScreen(mousePos);
+            // Ensure the overlay grid has been measured and arranged.
+            OverlayGrid.Visibility = Visibility.Visible;
+            await Dispatcher.InvokeAsync(() => OverlayGrid.UpdateLayout(), DispatcherPriority.Loaded);
+            await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Render);
 
-            double x = mouseScreen.X;
-            double y = mouseScreen.Y;
+            double clientWidth = OverlayGrid.ActualWidth;
+            double clientHeight = OverlayGrid.ActualHeight;
 
-            switch (ModalAlignment)
+            // Fallback to window content area if overlay size is still zero.
+            if (clientWidth <= 0 || clientHeight <= 0)
             {
-                case CoreEnums.PopupAlignment.TopLeft: break;
-                case CoreEnums.PopupAlignment.TopCenter: x -= popupWidth / 2; break;
-                case CoreEnums.PopupAlignment.TopRight: x -= popupWidth; break;
-                case CoreEnums.PopupAlignment.LeftCenter: y -= popupHeight / 2; break;
-                case CoreEnums.PopupAlignment.MiddleCenter: x -= popupWidth / 2; y -= popupHeight / 2; break;
-                case CoreEnums.PopupAlignment.RightCenter: x -= popupWidth; y -= popupHeight / 2; break;
-                case CoreEnums.PopupAlignment.BottomLeft: y -= popupHeight; break;
-                case CoreEnums.PopupAlignment.BottomCenter: x -= popupWidth / 2; y -= popupHeight; break;
-                case CoreEnums.PopupAlignment.BottomRight: x -= popupWidth; y -= popupHeight; break;
+                var window = Window.GetWindow(this);
+                if (window != null && window.Content is FrameworkElement content)
+                {
+                    clientWidth = content.ActualWidth;
+                    clientHeight = content.ActualHeight;
+                }
+                else
+                {
+                    clientWidth = SystemParameters.WorkArea.Width;
+                    clientHeight = SystemParameters.WorkArea.Height;
+                }
             }
 
-            x += ModalOffsetX;
-            y += ModalOffsetY;
-
-            if (ModalAutoFlip)
+            double x = 0, y = 0;
+            switch (Alignment)
             {
-                if (x + popupWidth > screenBounds.Right) x = screenBounds.Right - popupWidth;
-                if (x < screenBounds.Left) x = screenBounds.Left;
-                if (y + popupHeight > screenBounds.Bottom) y = screenBounds.Bottom - popupHeight;
-                if (y < screenBounds.Top) y = screenBounds.Top;
+                case CoreEnums.PopupAlignment.TopLeft:
+                    x = 0; y = 0;
+                    break;
+                case CoreEnums.PopupAlignment.TopCenter:
+                    x = (clientWidth - popupWidth) / 2; y = 0;
+                    break;
+                case CoreEnums.PopupAlignment.TopRight:
+                    x = clientWidth - popupWidth; y = 0;
+                    break;
+                case CoreEnums.PopupAlignment.LeftCenter:
+                    x = 0; y = (clientHeight - popupHeight) / 2;
+                    break;
+                case CoreEnums.PopupAlignment.MiddleCenter:
+                    x = (clientWidth - popupWidth) / 2; y = (clientHeight - popupHeight) / 2;
+                    break;
+                case CoreEnums.PopupAlignment.RightCenter:
+                    x = clientWidth - popupWidth; y = (clientHeight - popupHeight) / 2;
+                    break;
+                case CoreEnums.PopupAlignment.BottomLeft:
+                    x = 0; y = clientHeight - popupHeight;
+                    break;
+                case CoreEnums.PopupAlignment.BottomCenter:
+                    x = (clientWidth - popupWidth) / 2; y = clientHeight - popupHeight;
+                    break;
+                case CoreEnums.PopupAlignment.BottomRight:
+                    x = clientWidth - popupWidth; y = clientHeight - popupHeight;
+                    break;
+                default:
+                    x = 0; y = 0;
+                    break;
+            }
+
+            x += OffsetX;
+            y += OffsetY;
+
+            if (AutoFlip)
+            {
+                if (x + popupWidth > clientWidth) x = clientWidth - popupWidth;
+                if (x < 0) x = 0;
+                if (y + popupHeight > clientHeight) y = clientHeight - popupHeight;
+                if (y < 0) y = 0;
             }
 
             ModalContentBorder.Margin = new Thickness(x, y, 0, 0);
+            ModalContentBorder.HorizontalAlignment = HorizontalAlignment.Left;
+            ModalContentBorder.VerticalAlignment = VerticalAlignment.Top;
+
+            // Overlay is already visible, no need to set again.
         }
         else
         {
-            // Use PositionCalculator for other anchor types
             CoreRect? anchorRect = null;
-            switch (ModalAnchorTarget)
+            switch (AnchorTarget)
             {
-                case CoreEnums.AnchorTarget.UiElement when ModalAnchorElement != null:
-                    var elem = ModalAnchorElement;
+                case CoreEnums.AnchorTarget.UiElement when AnchorElement != null:
+                    var elem = AnchorElement;
                     var elemPoint = elem.PointToScreen(new System.Windows.Point(0, 0));
                     var elemSize = new System.Windows.Size(elem.ActualWidth, elem.ActualHeight);
                     anchorRect = new CoreRect(elemPoint.X, elemPoint.Y, elemSize.Width, elemSize.Height);
                     break;
-                case CoreEnums.AnchorTarget.CustomCoordinates:
-                    anchorRect = new CoreRect(ModalCustomX, ModalCustomY, 1, 1);
+                case CoreEnums.AnchorTarget.MouseCursor:
+                    var mainWin = System.Windows.Application.Current.MainWindow;
+                    var mousePos = Mouse.GetPosition(mainWin);
+                    var mouseScreen = mainWin.PointToScreen(mousePos);
+                    anchorRect = new CoreRect(mouseScreen.X, mouseScreen.Y, 1, 1);
                     break;
-                case CoreEnums.AnchorTarget.ParentContainer:
+                case CoreEnums.AnchorTarget.CustomCoordinates:
+                    anchorRect = new CoreRect(CustomX, CustomY, 1, 1);
+                    break;
                 default:
                     anchorRect = null;
                     break;
             }
 
+            var screenBounds = GetScreenBounds();
+            var bounds = (AnchorTarget == CoreEnums.AnchorTarget.ParentContainer) ? GetParentWindowBounds() : screenBounds;
             var popupSize = new CoreSize(popupWidth, popupHeight);
             var request = new PopupRequest
             {
-                AnchorTarget = ModalAnchorTarget,
-                Alignment = ModalAlignment,
-                Offset = (ModalOffsetX, ModalOffsetY),
-                AutoFlip = ModalAutoFlip,
-                CustomX = ModalAnchorTarget == CoreEnums.AnchorTarget.CustomCoordinates ? ModalCustomX : null,
-                CustomY = ModalAnchorTarget == CoreEnums.AnchorTarget.CustomCoordinates ? ModalCustomY : null
+                AnchorTarget = AnchorTarget,
+                Alignment = Alignment,
+                Offset = (OffsetX, OffsetY),
+                AutoFlip = AutoFlip,
+                CustomX = AnchorTarget == CoreEnums.AnchorTarget.CustomCoordinates ? CustomX : null,
+                CustomY = AnchorTarget == CoreEnums.AnchorTarget.CustomCoordinates ? CustomY : null
             };
 
-            var bounds = (ModalAnchorTarget == CoreEnums.AnchorTarget.ParentContainer) ? GetParentWindowBounds() : screenBounds;
             var finalPos = PositionCalculator.CalculatePosition(request, anchorRect, popupSize, bounds);
             ModalContentBorder.Margin = new Thickness(finalPos.X, finalPos.Y, 0, 0);
+            ModalContentBorder.HorizontalAlignment = HorizontalAlignment.Left;
+            ModalContentBorder.VerticalAlignment = VerticalAlignment.Top;
+
+            OverlayGrid.Visibility = Visibility.Visible;
         }
 
-        // Align margin‑based positioning by resetting alignment to top‑left
-        ModalContentBorder.HorizontalAlignment = HorizontalAlignment.Left;
-        ModalContentBorder.VerticalAlignment = VerticalAlignment.Top;
-
-        // Show the overlay and force a render pass
-        OverlayGrid.Visibility = Visibility.Visible;
         await Dispatcher.InvokeAsync(() => ModalContentBorder.UpdateLayout(), DispatcherPriority.Render);
 
         IsOpen = true;
@@ -186,14 +220,10 @@ public partial class OmenPopup
         await AnimateEnterAsync(ModalContentBorder, EnterAnimation, EnterDuration, EnterEasing);
     }
 
-    // ------------------------------------------------------------
+    // ============================================================================================
     // Lightweight (floating) popup
-    // ------------------------------------------------------------
+    // ============================================================================================
 
-    /// <summary>
-    /// Displays a lightweight (non‑modal) popup that floats above the UI,
-    /// anchored either to a specific element or to the mouse cursor.
-    /// </summary>
     private async Task ShowLightweightAsync()
     {
         var border = new Border
@@ -206,16 +236,11 @@ public partial class OmenPopup
             Effect = ModalContentBorder.Effect,
             RenderTransform = new TransformGroup
             {
-                Children = new TransformCollection
-                {
-                    new ScaleTransform(1, 1),
-                    new TranslateTransform(0, 0)
-                }
+                Children = [new ScaleTransform(1, 1), new TranslateTransform(0, 0)]
             },
             RenderTransformOrigin = new Point(0.5, 0.5)
         };
 
-        // Grid to hold close button (if enabled) and content
         var grid = new Grid();
         grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
@@ -248,7 +273,6 @@ public partial class OmenPopup
         border.Child = grid;
         _lightweightContentHost = border;
 
-        // Set initial animation states
         if ((EnterAnimation & CoreEnums.AnimationType.Fade) != 0)
             _lightweightContentHost.Opacity = 0;
         else
@@ -260,7 +284,6 @@ public partial class OmenPopup
             scale.ScaleX = scale.ScaleY = 0.8;
         }
 
-        // Compute slide start offsets based on desired size
         double startX = 0, startY = 0;
         var size = MeasureContentSize(_lightweightContentHost);
         if ((EnterAnimation & CoreEnums.AnimationType.SlideLeft) != 0)
@@ -275,23 +298,145 @@ public partial class OmenPopup
         translate.X = startX;
         translate.Y = startY;
 
-        // Create the floating popup
-        _lightweightPopup = new WpfPopup
+        await EnsureTargetHasSize(_lightweightContentHost);
+        double popupWidth = _lightweightContentHost.ActualWidth;
+        double popupHeight = _lightweightContentHost.ActualHeight;
+        if (popupWidth <= 0) popupWidth = _lightweightContentHost.DesiredSize.Width;
+        if (popupHeight <= 0) popupHeight = _lightweightContentHost.DesiredSize.Height;
+        if (popupWidth <= 0) popupWidth = 200;
+        if (popupHeight <= 0) popupHeight = 100;
+
+        if (AnchorTarget == CoreEnums.AnchorTarget.ParentContainer)
         {
-            Child = _lightweightContentHost,
-            AllowsTransparency = true,
-            StaysOpen = !StaysOpenOnOutsideClick,
-            PlacementTarget = AnchorElement,
-            Placement = AnchorElement != null ? PlacementMode.Custom : PlacementMode.MousePoint
-        };
-        if (AnchorElement != null)
-            _lightweightPopup.CustomPopupPlacementCallback = OnCustomPopupPlacement;
+            var window = Window.GetWindow(this);
+            if (window == null) return;
+
+            var windowPos = window.PointToScreen(new System.Windows.Point(0, 0));
+            double clientWidth = window.ActualWidth;
+            double clientHeight = window.ActualHeight;
+
+            double x = 0, y = 0;
+            switch (Alignment)
+            {
+                case CoreEnums.PopupAlignment.TopLeft:
+                    x = windowPos.X; y = windowPos.Y;
+                    break;
+                case CoreEnums.PopupAlignment.TopCenter:
+                    x = windowPos.X + (clientWidth - popupWidth) / 2; y = windowPos.Y;
+                    break;
+                case CoreEnums.PopupAlignment.TopRight:
+                    x = windowPos.X + clientWidth - popupWidth; y = windowPos.Y;
+                    break;
+                case CoreEnums.PopupAlignment.LeftCenter:
+                    x = windowPos.X; y = windowPos.Y + (clientHeight - popupHeight) / 2;
+                    break;
+                case CoreEnums.PopupAlignment.MiddleCenter:
+                    x = windowPos.X + (clientWidth - popupWidth) / 2; y = windowPos.Y + (clientHeight - popupHeight) / 2;
+                    break;
+                case CoreEnums.PopupAlignment.RightCenter:
+                    x = windowPos.X + clientWidth - popupWidth; y = windowPos.Y + (clientHeight - popupHeight) / 2;
+                    break;
+                case CoreEnums.PopupAlignment.BottomLeft:
+                    x = windowPos.X; y = windowPos.Y + clientHeight - popupHeight;
+                    break;
+                case CoreEnums.PopupAlignment.BottomCenter:
+                    x = windowPos.X + (clientWidth - popupWidth) / 2; y = windowPos.Y + clientHeight - popupHeight;
+                    break;
+                case CoreEnums.PopupAlignment.BottomRight:
+                    x = windowPos.X + clientWidth - popupWidth; y = windowPos.Y + clientHeight - popupHeight;
+                    break;
+                default:
+                    x = windowPos.X; y = windowPos.Y;
+                    break;
+            }
+
+            x += OffsetX;
+            y += OffsetY;
+
+            if (AutoFlip)
+            {
+                var screenBounds = GetScreenBounds();
+                if (x + popupWidth > screenBounds.Right) x = screenBounds.Right - popupWidth;
+                if (x < screenBounds.Left) x = screenBounds.Left;
+                if (y + popupHeight > screenBounds.Bottom) y = screenBounds.Bottom - popupHeight;
+                if (y < screenBounds.Top) y = screenBounds.Top;
+            }
+
+            _lightweightPopup = new WpfPopup
+            {
+                Child = _lightweightContentHost,
+                AllowsTransparency = true,
+                StaysOpen = !CloseOnOutsideClick,
+                Placement = PlacementMode.Absolute,
+                HorizontalOffset = x,
+                VerticalOffset = y
+            };
+        }
+        else
+        {
+            CoreRect? anchorRect = null;
+            switch (AnchorTarget)
+            {
+                case CoreEnums.AnchorTarget.UiElement when AnchorElement != null:
+                    var elem = AnchorElement;
+                    var elemPoint = elem.PointToScreen(new System.Windows.Point(0, 0));
+                    var elemSize = new System.Windows.Size(elem.ActualWidth, elem.ActualHeight);
+                    anchorRect = new CoreRect(elemPoint.X, elemPoint.Y, elemSize.Width, elemSize.Height);
+                    break;
+                case CoreEnums.AnchorTarget.MouseCursor:
+                    var mainWin = System.Windows.Application.Current.MainWindow;
+                    var mousePos = Mouse.GetPosition(mainWin);
+                    var mouseScreen = mainWin.PointToScreen(mousePos);
+                    anchorRect = new CoreRect(mouseScreen.X, mouseScreen.Y, 1, 1);
+                    break;
+                case CoreEnums.AnchorTarget.CustomCoordinates:
+                    anchorRect = new CoreRect(CustomX, CustomY, 1, 1);
+                    break;
+                default:
+                    anchorRect = null;
+                    break;
+            }
+
+            var screenBounds = GetScreenBounds();
+            var bounds = (AnchorTarget == CoreEnums.AnchorTarget.ParentContainer) ? GetParentWindowBounds() : screenBounds;
+            var popupSize = new CoreSize(popupWidth, popupHeight);
+            var request = new PopupRequest
+            {
+                AnchorTarget = AnchorTarget,
+                Alignment = Alignment,
+                Offset = (OffsetX, OffsetY),
+                AutoFlip = AutoFlip,
+                CustomX = AnchorTarget == CoreEnums.AnchorTarget.CustomCoordinates ? CustomX : null,
+                CustomY = AnchorTarget == CoreEnums.AnchorTarget.CustomCoordinates ? CustomY : null
+            };
+
+            var finalPos = PositionCalculator.CalculatePosition(request, anchorRect, popupSize, bounds);
+
+            _lightweightPopup = new WpfPopup
+            {
+                Child = _lightweightContentHost,
+                AllowsTransparency = true,
+                StaysOpen = !CloseOnOutsideClick,
+                Placement = PlacementMode.Custom,
+                CustomPopupPlacementCallback = (popupSize, targetSize, offset) =>
+                {
+                    double x = finalPos.X;
+                    double y = finalPos.Y;
+                    if (AnchorTarget == CoreEnums.AnchorTarget.UiElement && AnchorElement != null)
+                    {
+                        var targetPoint = AnchorElement.PointToScreen(new System.Windows.Point(0, 0));
+                        x -= targetPoint.X;
+                        y -= targetPoint.Y;
+                    }
+                    return [new CustomPopupPlacement(new System.Windows.Point(x, y), PopupPrimaryAxis.None)];
+                }
+            };
+        }
 
         _lightweightPopup.Closed += (s, e) => _ = CloseAsync();
         _lightweightPopup.IsOpen = true;
         IsOpen = true;
 
-        // Run the enter animation
         await AnimateEnterAsync(_lightweightContentHost, EnterAnimation, EnterDuration, EnterEasing);
     }
 }

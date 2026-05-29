@@ -66,15 +66,15 @@ public partial class OmenPopup
         set => SetValue(CanCloseOnEscapeProperty, value);
     }
 
-    /// <summary>Identifies the <see cref="CloseOnOverlayClick"/> dependency property.</summary>
-    public static readonly DependencyProperty CloseOnOverlayClickProperty =
-        DependencyProperty.Register(nameof(CloseOnOverlayClick), typeof(bool), typeof(OmenPopup), new PropertyMetadata(true));
+    /// <summary>Identifies the <see cref="CloseOnOutsideClick"/> dependency property.</summary>
+    public static readonly DependencyProperty CloseOnOutsideClickProperty =
+        DependencyProperty.Register(nameof(CloseOnOutsideClick), typeof(bool), typeof(OmenPopup), new PropertyMetadata(true));
 
-    /// <summary>Gets or sets whether clicking the overlay closes the popup (modal only).</summary>
-    public bool CloseOnOverlayClick
+    /// <summary>Gets or sets whether clicking outside the popup closes it (works for both modal and lightweight).</summary>
+    public bool CloseOnOutsideClick
     {
-        get => (bool)GetValue(CloseOnOverlayClickProperty);
-        set => SetValue(CloseOnOverlayClickProperty, value);
+        get => (bool)GetValue(CloseOnOutsideClickProperty);
+        set => SetValue(CloseOnOutsideClickProperty, value);
     }
 
     /// <summary>Identifies the <see cref="ShowCloseButton"/> dependency property.</summary>
@@ -176,155 +176,96 @@ public partial class OmenPopup
         set => SetValue(ExitEasingProperty, value);
     }
 
-    /// <summary>Identifies the <see cref="StaysOpenOnOutsideClick"/> dependency property.</summary>
-    public static readonly DependencyProperty StaysOpenOnOutsideClickProperty =
-        DependencyProperty.Register(nameof(StaysOpenOnOutsideClick), typeof(bool), typeof(OmenPopup), new PropertyMetadata(true));
+    #endregion
 
-    /// <summary>Gets or sets whether the lightweight popup stays open when clicking outside.</summary>
-    public bool StaysOpenOnOutsideClick
+    #region Positioning Properties (common for modal and lightweight)
+
+    /// <summary>Identifies the <see cref="AnchorTarget"/> dependency property.</summary>
+    public static readonly DependencyProperty AnchorTargetProperty =
+        DependencyProperty.Register(nameof(AnchorTarget), typeof(CoreEnums.AnchorTarget), typeof(OmenPopup), new PropertyMetadata(CoreEnums.AnchorTarget.ParentContainer));
+
+    /// <summary>Gets or sets the anchor target for popup positioning.</summary>
+    public CoreEnums.AnchorTarget AnchorTarget
     {
-        get => (bool)GetValue(StaysOpenOnOutsideClickProperty);
-        set => SetValue(StaysOpenOnOutsideClickProperty, value);
+        get => (CoreEnums.AnchorTarget)GetValue(AnchorTargetProperty);
+        set => SetValue(AnchorTargetProperty, value);
     }
 
     /// <summary>Identifies the <see cref="AnchorElement"/> dependency property.</summary>
     public static readonly DependencyProperty AnchorElementProperty =
         DependencyProperty.Register(nameof(AnchorElement), typeof(FrameworkElement), typeof(OmenPopup));
 
-    /// <summary>Gets or sets the element to which the lightweight popup anchors (if any).</summary>
+    /// <summary>Gets or sets the UI element for anchoring (when AnchorTarget = UiElement).</summary>
     public FrameworkElement? AnchorElement
     {
         get => (FrameworkElement?)GetValue(AnchorElementProperty);
         set => SetValue(AnchorElementProperty, value);
     }
 
-    #endregion
+    /// <summary>Identifies the <see cref="Alignment"/> dependency property.</summary>
+    public static readonly DependencyProperty AlignmentProperty =
+        DependencyProperty.Register(nameof(Alignment), typeof(CoreEnums.PopupAlignment), typeof(OmenPopup), new PropertyMetadata(CoreEnums.PopupAlignment.MiddleCenter));
 
-    #region Modal Positioning Properties
-
-    /// <summary>Identifies the <see cref="ModalAnchorTarget"/> dependency property.</summary>
-    public static readonly DependencyProperty ModalAnchorTargetProperty =
-        DependencyProperty.Register(nameof(ModalAnchorTarget), typeof(CoreEnums.AnchorTarget), typeof(OmenPopup), new PropertyMetadata(CoreEnums.AnchorTarget.ParentContainer));
-
-    /// <summary>Gets or sets the anchor target for modal popup positioning.</summary>
-    public CoreEnums.AnchorTarget ModalAnchorTarget
+    /// <summary>Gets or sets the alignment of the popup relative to the anchor point.</summary>
+    public CoreEnums.PopupAlignment Alignment
     {
-        get => (CoreEnums.AnchorTarget)GetValue(ModalAnchorTargetProperty);
-        set => SetValue(ModalAnchorTargetProperty, value);
+        get => (CoreEnums.PopupAlignment)GetValue(AlignmentProperty);
+        set => SetValue(AlignmentProperty, value);
     }
 
-    /// <summary>Identifies the <see cref="ModalAnchorElement"/> dependency property.</summary>
-    public static readonly DependencyProperty ModalAnchorElementProperty =
-        DependencyProperty.Register(nameof(ModalAnchorElement), typeof(FrameworkElement), typeof(OmenPopup));
+    /// <summary>Identifies the <see cref="OffsetX"/> dependency property.</summary>
+    public static readonly DependencyProperty OffsetXProperty =
+        DependencyProperty.Register(nameof(OffsetX), typeof(int), typeof(OmenPopup), new PropertyMetadata(0));
 
-    /// <summary>Gets or sets the UI element for modal anchoring (when AnchorTarget = UiElement).</summary>
-    public FrameworkElement? ModalAnchorElement
+    /// <summary>Gets or sets the horizontal offset (pixels) from the anchor point.</summary>
+    public int OffsetX
     {
-        get => (FrameworkElement?)GetValue(ModalAnchorElementProperty);
-        set => SetValue(ModalAnchorElementProperty, value);
+        get => (int)GetValue(OffsetXProperty);
+        set => SetValue(OffsetXProperty, value);
     }
 
-    /// <summary>Identifies the <see cref="ModalAlignment"/> dependency property.</summary>
-    public static readonly DependencyProperty ModalAlignmentProperty =
-        DependencyProperty.Register(nameof(ModalAlignment), typeof(CoreEnums.PopupAlignment), typeof(OmenPopup), new PropertyMetadata(CoreEnums.PopupAlignment.MiddleCenter));
+    /// <summary>Identifies the <see cref="OffsetY"/> dependency property.</summary>
+    public static readonly DependencyProperty OffsetYProperty =
+        DependencyProperty.Register(nameof(OffsetY), typeof(int), typeof(OmenPopup), new PropertyMetadata(0));
 
-    /// <summary>Gets or sets the alignment of the modal popup relative to the anchor point.</summary>
-    public CoreEnums.PopupAlignment ModalAlignment
+    /// <summary>Gets or sets the vertical offset (pixels) from the anchor point.</summary>
+    public int OffsetY
     {
-        get => (CoreEnums.PopupAlignment)GetValue(ModalAlignmentProperty);
-        set => SetValue(ModalAlignmentProperty, value);
+        get => (int)GetValue(OffsetYProperty);
+        set => SetValue(OffsetYProperty, value);
     }
 
-    /// <summary>Identifies the <see cref="ModalOffsetX"/> dependency property.</summary>
-    public static readonly DependencyProperty ModalOffsetXProperty =
-        DependencyProperty.Register(nameof(ModalOffsetX), typeof(int), typeof(OmenPopup), new PropertyMetadata(0));
+    /// <summary>Identifies the <see cref="AutoFlip"/> dependency property.</summary>
+    public static readonly DependencyProperty AutoFlipProperty =
+        DependencyProperty.Register(nameof(AutoFlip), typeof(bool), typeof(OmenPopup), new PropertyMetadata(true));
 
-    /// <summary>Gets or sets the horizontal offset (pixels) for modal popup positioning.</summary>
-    public int ModalOffsetX
+    /// <summary>Gets or sets whether the popup automatically flips to avoid off‑screen.</summary>
+    public bool AutoFlip
     {
-        get => (int)GetValue(ModalOffsetXProperty);
-        set => SetValue(ModalOffsetXProperty, value);
+        get => (bool)GetValue(AutoFlipProperty);
+        set => SetValue(AutoFlipProperty, value);
     }
 
-    /// <summary>Identifies the <see cref="ModalOffsetY"/> dependency property.</summary>
-    public static readonly DependencyProperty ModalOffsetYProperty =
-        DependencyProperty.Register(nameof(ModalOffsetY), typeof(int), typeof(OmenPopup), new PropertyMetadata(0));
-
-    /// <summary>Gets or sets the vertical offset (pixels) for modal popup positioning.</summary>
-    public int ModalOffsetY
-    {
-        get => (int)GetValue(ModalOffsetYProperty);
-        set => SetValue(ModalOffsetYProperty, value);
-    }
-
-    /// <summary>Identifies the <see cref="ModalAutoFlip"/> dependency property.</summary>
-    public static readonly DependencyProperty ModalAutoFlipProperty =
-        DependencyProperty.Register(nameof(ModalAutoFlip), typeof(bool), typeof(OmenPopup), new PropertyMetadata(true));
-
-    /// <summary>Gets or sets whether the modal popup automatically flips to avoid off‑screen.</summary>
-    public bool ModalAutoFlip
-    {
-        get => (bool)GetValue(ModalAutoFlipProperty);
-        set => SetValue(ModalAutoFlipProperty, value);
-    }
-
-    /// <summary>Identifies the <see cref="ModalCustomX"/> dependency property.</summary>
-    public static readonly DependencyProperty ModalCustomXProperty =
-        DependencyProperty.Register(nameof(ModalCustomX), typeof(double), typeof(OmenPopup), new PropertyMetadata(0.0));
+    /// <summary>Identifies the <see cref="CustomX"/> dependency property.</summary>
+    public static readonly DependencyProperty CustomXProperty =
+        DependencyProperty.Register(nameof(CustomX), typeof(double), typeof(OmenPopup), new PropertyMetadata(0.0));
 
     /// <summary>Gets or sets the custom X coordinate (when AnchorTarget = CustomCoordinates).</summary>
-    public double ModalCustomX
+    public double CustomX
     {
-        get => (double)GetValue(ModalCustomXProperty);
-        set => SetValue(ModalCustomXProperty, value);
+        get => (double)GetValue(CustomXProperty);
+        set => SetValue(CustomXProperty, value);
     }
 
-    /// <summary>Identifies the <see cref="ModalCustomY"/> dependency property.</summary>
-    public static readonly DependencyProperty ModalCustomYProperty =
-        DependencyProperty.Register(nameof(ModalCustomY), typeof(double), typeof(OmenPopup), new PropertyMetadata(0.0));
+    /// <summary>Identifies the <see cref="CustomY"/> dependency property.</summary>
+    public static readonly DependencyProperty CustomYProperty =
+        DependencyProperty.Register(nameof(CustomY), typeof(double), typeof(OmenPopup), new PropertyMetadata(0.0));
 
     /// <summary>Gets or sets the custom Y coordinate (when AnchorTarget = CustomCoordinates).</summary>
-    public double ModalCustomY
+    public double CustomY
     {
-        get => (double)GetValue(ModalCustomYProperty);
-        set => SetValue(ModalCustomYProperty, value);
-    }
-
-    #endregion
-
-    #region Lightweight Positioning Properties
-
-    /// <summary>Identifies the <see cref="LightweightAlignment"/> dependency property.</summary>
-    public static readonly DependencyProperty LightweightAlignmentProperty =
-        DependencyProperty.Register(nameof(LightweightAlignment), typeof(CoreEnums.PopupAlignment), typeof(OmenPopup), new PropertyMetadata(CoreEnums.PopupAlignment.BottomCenter));
-
-    /// <summary>Gets or sets the alignment for lightweight popups when anchored to a UI element.</summary>
-    public CoreEnums.PopupAlignment LightweightAlignment
-    {
-        get => (CoreEnums.PopupAlignment)GetValue(LightweightAlignmentProperty);
-        set => SetValue(LightweightAlignmentProperty, value);
-    }
-
-    /// <summary>Identifies the <see cref="LightweightOffsetX"/> dependency property.</summary>
-    public static readonly DependencyProperty LightweightOffsetXProperty =
-        DependencyProperty.Register(nameof(LightweightOffsetX), typeof(int), typeof(OmenPopup), new PropertyMetadata(5));
-
-    /// <summary>Gets or sets the horizontal offset for lightweight popups.</summary>
-    public int LightweightOffsetX
-    {
-        get => (int)GetValue(LightweightOffsetXProperty);
-        set => SetValue(LightweightOffsetXProperty, value);
-    }
-
-    /// <summary>Identifies the <see cref="LightweightOffsetY"/> dependency property.</summary>
-    public static readonly DependencyProperty LightweightOffsetYProperty =
-        DependencyProperty.Register(nameof(LightweightOffsetY), typeof(int), typeof(OmenPopup), new PropertyMetadata(5));
-
-    /// <summary>Gets or sets the vertical offset for lightweight popups.</summary>
-    public int LightweightOffsetY
-    {
-        get => (int)GetValue(LightweightOffsetYProperty);
-        set => SetValue(LightweightOffsetYProperty, value);
+        get => (double)GetValue(CustomYProperty);
+        set => SetValue(CustomYProperty, value);
     }
 
     #endregion

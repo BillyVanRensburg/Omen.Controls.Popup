@@ -56,12 +56,13 @@ public partial class OmenPopup
         var corePopupSize = new CoreSize(popupSize.Width, popupSize.Height);
         CoreRect? coreAnchorRect = anchorRect.HasValue ? new CoreRect(anchorRect.Value.X, anchorRect.Value.Y, anchorRect.Value.Width, anchorRect.Value.Height) : null;
 
+        // Use common positioning properties (AnchorTarget, Alignment, OffsetX, OffsetY, AutoFlip)
         var request = new PopupRequest
         {
-            AnchorTarget = CoreEnums.AnchorTarget.UiElement,
-            Alignment = LightweightAlignment,
-            Offset = (LightweightOffsetX, LightweightOffsetY),
-            AutoFlip = true,
+            AnchorTarget = AnchorTarget,
+            Alignment = Alignment,
+            Offset = (OffsetX, OffsetY),
+            AutoFlip = AutoFlip,
         };
 
         var position = PositionCalculator.CalculatePosition(request, coreAnchorRect, corePopupSize, screenBounds);

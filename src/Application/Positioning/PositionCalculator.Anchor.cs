@@ -17,7 +17,7 @@ public static partial class PositionCalculator
             AnchorTarget.MouseCursor when anchorRect.HasValue => new Point(anchorRect.Value.X, anchorRect.Value.Y),
             AnchorTarget.CustomCoordinates when request.CustomX.HasValue && request.CustomY.HasValue
                 => new Point(request.CustomX.Value, request.CustomY.Value),
-            AnchorTarget.ParentContainer => throw new InvalidOperationException("ParentContainer should be handled separately."),
+            AnchorTarget.ParentContainer when anchorRect.HasValue => GetAnchorFromRect(anchorRect.Value, request.Alignment),
             _ => new Point(0, 0)
         };
     }

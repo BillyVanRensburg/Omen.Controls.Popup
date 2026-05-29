@@ -16,7 +16,7 @@ namespace Omen.Controls.Popup.Sample
         {
             InitializeComponent();
 
-            ModalAnchorTargetCombo.SelectionChanged += ModalAnchorTargetCombo_SelectionChanged;
+            AnchorTargetCombo.SelectionChanged += AnchorTargetCombo_SelectionChanged;
             OverlayBrushCombo.SelectionChanged += OverlayBrushCombo_SelectionChanged;
 
             if (TestPopup != null)
@@ -35,15 +35,14 @@ namespace Omen.Controls.Popup.Sample
             CustomOverlayPanel.Visibility = (tag == "Custom") ? Visibility.Visible : Visibility.Collapsed;
         }
 
-        private void ModalAnchorTargetCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void AnchorTargetCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            var tag = ((ComboBoxItem)ModalAnchorTargetCombo.SelectedItem)?.Tag as string;
+            var tag = ((ComboBoxItem)AnchorTargetCombo.SelectedItem)?.Tag as string;
             bool isUiElement = tag == "UiElement";
             bool isCustom = tag == "CustomCoordinates";
-            // ScreenEdge removed – no longer needed
 
-            ModalAnchorElementPanel.Visibility = isUiElement ? Visibility.Visible : Visibility.Collapsed;
-            ModalCustomCoordsPanel.Visibility = isCustom ? Visibility.Visible : Visibility.Collapsed;
+            AnchorElementPanel.Visibility = isUiElement ? Visibility.Visible : Visibility.Collapsed;
+            CustomCoordsPanel.Visibility = isCustom ? Visibility.Visible : Visibility.Collapsed;
         }
 
         private async void ShowButton_Click(object sender, RoutedEventArgs e)
@@ -55,18 +54,45 @@ namespace Omen.Controls.Popup.Sample
                 bool isModal = ModalRadio.IsChecked == true;
                 TestPopup.IsModal = isModal;
 
-                TestPopup.AnchorElement = (AnchorToButtonRadio?.IsChecked == true) ? ShowButton : null;
+                // Positioning properties (common)
+                string anchorTag = ((ComboBoxItem)AnchorTargetCombo.SelectedItem)?.Tag as string ?? "ParentContainer";
+                TestPopup.AnchorTarget = ParseAnchorTarget(anchorTag);
 
-                bool stayOpenOutside = StayOpenOutsideCheckBox?.IsChecked == true;
-                if (isModal)
-                    TestPopup.CloseOnOverlayClick = !stayOpenOutside;
+                if (TestPopup.AnchorTarget == CoreEnums.AnchorTarget.UiElement)
+                {
+                    var selected = AnchorElementCombo.SelectedItem as ComboBoxItem;
+                    TestPopup.AnchorElement = selected?.Tag as FrameworkElement ?? ShowButton;
+                }
                 else
-                    TestPopup.StaysOpenOnOutsideClick = stayOpenOutside;
+                {
+                    TestPopup.AnchorElement = null;
+                }
 
-                TestPopup.CanCloseOnEscape = EscapeCheckBox?.IsChecked == true;
+                if (TestPopup.AnchorTarget == CoreEnums.AnchorTarget.CustomCoordinates)
+                {
+                    double.TryParse(CustomXBox.Text, out double cx);
+                    double.TryParse(CustomYBox.Text, out double cy);
+                    TestPopup.CustomX = cx;
+                    TestPopup.CustomY = cy;
+                }
 
-                TestPopup.ShowCloseButton = ShowCloseButtonCheckBox?.IsChecked == true;
-                if (CustomCloseButtonCheckBox?.IsChecked == true)
+                string alignTag = ((ComboBoxItem)AlignmentCombo.SelectedItem)?.Tag as string ?? "MiddleCenter";
+                TestPopup.Alignment = ParseAlignment(alignTag);
+
+                int offsetX = int.TryParse(OffsetXBox.Text, out int ox) ? ox : 0;
+                int offsetY = int.TryParse(OffsetYBox.Text, out int oy) ? oy : 0;
+                TestPopup.OffsetX = offsetX;
+                TestPopup.OffsetY = offsetY;
+
+                TestPopup.AutoFlip = AutoFlipCheckBox.IsChecked == true;
+
+                // Popup options
+                TestPopup.CloseOnOutsideClick = CloseOnOutsideClickCheckBox.IsChecked == true;
+                TestPopup.CanCloseOnEscape = EscapeCheckBox.IsChecked == true;
+
+                // Close button options
+                TestPopup.ShowCloseButton = ShowCloseButtonCheckBox.IsChecked == true;
+                if (CustomCloseButtonCheckBox.IsChecked == true)
                 {
                     var template = this.TryFindResource("CustomCloseButtonTemplate") as ControlTemplate;
                     TestPopup.CloseButtonTemplate = template;
@@ -76,20 +102,14 @@ namespace Omen.Controls.Popup.Sample
                     TestPopup.CloseButtonTemplate = null;
                 }
 
-                // Overlay Brush
+                // Overlay brush (modal only)
                 var selectedOverlay = ((ComboBoxItem)OverlayBrushCombo.SelectedItem)?.Tag as string;
                 if (selectedOverlay == "Custom")
                     TestPopup.OverlayBrush = (Brush)new BrushConverter().ConvertFromString(CustomOverlayBrushBox.Text);
                 else
                     TestPopup.OverlayBrush = (Brush)new BrushConverter().ConvertFromString(selectedOverlay ?? "#80000000");
 
-                // Lightweight positioning
-                string lwAlignTag = ((ComboBoxItem)LightweightAlignmentCombo.SelectedItem)?.Tag as string ?? "BottomCenter";
-                TestPopup.LightweightAlignment = ParseAlignment(lwAlignTag);
-                TestPopup.LightweightOffsetX = int.TryParse(LightweightOffsetXBox.Text, out int lx) ? lx : 5;
-                TestPopup.LightweightOffsetY = int.TryParse(LightweightOffsetYBox.Text, out int ly) ? ly : 5;
-
-                // Animation settings (using updated enum names)
+                // Animation settings
                 string enterTag = (EnterAnimationCombo?.SelectedItem as ComboBoxItem)?.Tag as string ?? "None";
                 string exitTag = (ExitAnimationCombo?.SelectedItem as ComboBoxItem)?.Tag as string ?? "None";
                 TestPopup.EnterAnimation = ParseAnimation(enterTag);
@@ -102,41 +122,6 @@ namespace Omen.Controls.Popup.Sample
                 string easingTag = (EasingCombo?.SelectedItem as ComboBoxItem)?.Tag as string ?? "Linear";
                 TestPopup.EnterEasing = ParseEasing(easingTag);
                 TestPopup.ExitEasing = ParseEasing(easingTag);
-
-                // Modal positioning
-                if (isModal)
-                {
-                    string anchorTag = ((ComboBoxItem)ModalAnchorTargetCombo.SelectedItem)?.Tag as string ?? "ParentContainer";
-                    TestPopup.ModalAnchorTarget = ParseAnchorTarget(anchorTag);
-
-                    if (TestPopup.ModalAnchorTarget == CoreEnums.AnchorTarget.UiElement)
-                    {
-                        var selected = ModalAnchorElementCombo.SelectedItem as ComboBoxItem;
-                        TestPopup.ModalAnchorElement = selected?.Tag as FrameworkElement ?? ShowButton;
-                    }
-                    else
-                    {
-                        TestPopup.ModalAnchorElement = null;
-                    }
-
-                    if (TestPopup.ModalAnchorTarget == CoreEnums.AnchorTarget.CustomCoordinates)
-                    {
-                        double.TryParse(ModalCustomXBox.Text, out double cx);
-                        double.TryParse(ModalCustomYBox.Text, out double cy);
-                        TestPopup.ModalCustomX = cx;
-                        TestPopup.ModalCustomY = cy;
-                    }
-
-                    string alignTag = ((ComboBoxItem)ModalAlignmentCombo.SelectedItem)?.Tag as string ?? "MiddleCenter";
-                    TestPopup.ModalAlignment = ParseAlignment(alignTag);
-
-                    int offsetX = int.TryParse(ModalOffsetXBox.Text, out int ox) ? ox : 0;
-                    int offsetY = int.TryParse(ModalOffsetYBox.Text, out int oy) ? oy : 0;
-                    TestPopup.ModalOffsetX = offsetX;
-                    TestPopup.ModalOffsetY = offsetY;
-
-                    TestPopup.ModalAutoFlip = ModalAutoFlipCheckBox.IsChecked == true;
-                }
 
                 // Content
                 if (DialogContentRadio?.IsChecked == true)

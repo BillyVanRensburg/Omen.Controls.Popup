@@ -33,19 +33,11 @@
                         </StackPanel>
                     </GroupBox>
 
-                    <!-- Lightweight Options (anchor only) -->
-                    <GroupBox Header="Lightweight Options" Margin="0,5">
-                        <StackPanel Margin="5">
-                            <RadioButton x:Name="AnchorToButtonRadio" Content="Anchor to 'Show Popup' button" GroupName="Anchor" IsChecked="True" Margin="0,3"/>
-                            <RadioButton x:Name="AnchorToMouseRadio" Content="Anchor to mouse cursor" GroupName="Anchor" Margin="0,3"/>
-                        </StackPanel>
-                    </GroupBox>
-
-                    <!-- Popup Options -->
+                    <!-- Popup Options (unified) -->
                     <GroupBox Header="Popup Options" Margin="0,5">
                         <StackPanel Margin="5">
                             <CheckBox x:Name="AsyncCheckBox" Content="Use Async (await)" IsChecked="True" Margin="0,3"/>
-                            <CheckBox x:Name="StayOpenOutsideCheckBox" Content="Stay open on outside click" IsChecked="True" Margin="0,3"/>
+                            <CheckBox x:Name="CloseOnOutsideClickCheckBox" Content="Close on outside click" IsChecked="True" Margin="0,3"/>
                             <CheckBox x:Name="EscapeCheckBox" Content="Close on Escape" IsChecked="True" Margin="0,3"/>
                         </StackPanel>
                     </GroupBox>
@@ -58,7 +50,7 @@
                         </StackPanel>
                     </GroupBox>
 
-                    <!-- Overlay Brush (Modal) -->
+                    <!-- Overlay Brush (Modal only) -->
                     <GroupBox Header="Overlay Brush (Modal)" Margin="0,5">
                         <StackPanel Margin="5">
                             <ComboBox x:Name="OverlayBrushCombo" Width="150" SelectedIndex="0">
@@ -72,37 +64,38 @@
                             </StackPanel>
                         </StackPanel>
                     </GroupBox>
+                </StackPanel>
 
-                    <!-- Modal Positioning (updated) -->
-                    <GroupBox Header="Modal Positioning" Margin="0,5">
+                <!-- Column 2 -->
+                <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                    <!-- Positioning (common for modal and lightweight) -->
+                    <GroupBox Header="Positioning" Margin="0,5">
                         <StackPanel Margin="5">
                             <TextBlock Text="Anchor Target:" Margin="0,5,0,0"/>
-                            <ComboBox x:Name="ModalAnchorTargetCombo" Width="150" SelectedIndex="0">
+                            <ComboBox x:Name="AnchorTargetCombo" Width="150" SelectedIndex="0">
                                 <ComboBoxItem Content="Parent Container" Tag="ParentContainer"/>
                                 <ComboBoxItem Content="UI Element" Tag="UiElement"/>
                                 <ComboBoxItem Content="Mouse Cursor" Tag="MouseCursor"/>
                                 <ComboBoxItem Content="Custom Coordinates" Tag="CustomCoordinates"/>
                             </ComboBox>
 
-                            <!-- UI Element picker -->
-                            <StackPanel x:Name="ModalAnchorElementPanel" Visibility="Collapsed">
+                            <StackPanel x:Name="AnchorElementPanel" Visibility="Collapsed">
                                 <TextBlock Text="Anchor Element:" Margin="0,5,0,0"/>
-                                <ComboBox x:Name="ModalAnchorElementCombo" Width="150">
+                                <ComboBox x:Name="AnchorElementCombo" Width="150">
                                     <ComboBoxItem Content="Show Button" Tag="{Binding ElementName=ShowButton}"/>
                                 </ComboBox>
                             </StackPanel>
 
-                            <!-- Custom coordinates panel -->
-                            <StackPanel x:Name="ModalCustomCoordsPanel" Visibility="Collapsed">
+                            <StackPanel x:Name="CustomCoordsPanel" Visibility="Collapsed">
                                 <TextBlock Text="Custom X,Y:" Margin="0,5,0,0"/>
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBox x:Name="ModalCustomXBox" Text="0" Width="60" Margin="0,0,5,0"/>
-                                    <TextBox x:Name="ModalCustomYBox" Text="0" Width="60"/>
+                                    <TextBox x:Name="CustomXBox" Text="0" Width="60" Margin="0,0,5,0"/>
+                                    <TextBox x:Name="CustomYBox" Text="0" Width="60"/>
                                 </StackPanel>
                             </StackPanel>
 
                             <TextBlock Text="Alignment:" Margin="0,8,0,0"/>
-                            <ComboBox x:Name="ModalAlignmentCombo" Width="120" SelectedIndex="4">
+                            <ComboBox x:Name="AlignmentCombo" Width="120" SelectedIndex="4">
                                 <ComboBoxItem Content="Top Left" Tag="TopLeft"/>
                                 <ComboBoxItem Content="Top Center" Tag="TopCenter"/>
                                 <ComboBoxItem Content="Top Right" Tag="TopRight"/>
@@ -116,41 +109,15 @@
 
                             <TextBlock Text="Offset (X,Y):" Margin="0,5,0,0"/>
                             <StackPanel Orientation="Horizontal">
-                                <TextBox x:Name="ModalOffsetXBox" Text="0" Width="50" Margin="0,0,5,0"/>
-                                <TextBox x:Name="ModalOffsetYBox" Text="0" Width="50"/>
+                                <TextBox x:Name="OffsetXBox" Text="0" Width="50" Margin="0,0,5,0"/>
+                                <TextBox x:Name="OffsetYBox" Text="0" Width="50"/>
                             </StackPanel>
 
-                            <CheckBox x:Name="ModalAutoFlipCheckBox" Content="Auto‑flip" IsChecked="True" Margin="0,5"/>
-                        </StackPanel>
-                    </GroupBox>
-                </StackPanel>
-
-                <!-- Column 2 -->
-                <StackPanel Grid.Column="1" Margin="10,0,0,0">
-                    <!-- Lightweight Positioning -->
-                    <GroupBox Header="Lightweight Positioning" Margin="0,5">
-                        <StackPanel Margin="5">
-                            <TextBlock Text="Alignment (when anchored to button):" Margin="0,5,0,0"/>
-                            <ComboBox x:Name="LightweightAlignmentCombo" Width="120" SelectedIndex="4">
-                                <ComboBoxItem Content="Top Left" Tag="TopLeft"/>
-                                <ComboBoxItem Content="Top Center" Tag="TopCenter"/>
-                                <ComboBoxItem Content="Top Right" Tag="TopRight"/>
-                                <ComboBoxItem Content="Left Center" Tag="LeftCenter"/>
-                                <ComboBoxItem Content="Middle Center" Tag="MiddleCenter"/>
-                                <ComboBoxItem Content="Right Center" Tag="RightCenter"/>
-                                <ComboBoxItem Content="Bottom Left" Tag="BottomLeft"/>
-                                <ComboBoxItem Content="Bottom Center" Tag="BottomCenter"/>
-                                <ComboBoxItem Content="Bottom Right" Tag="BottomRight"/>
-                            </ComboBox>
-                            <TextBlock Text="Offset (X,Y):" Margin="0,5,0,0"/>
-                            <StackPanel Orientation="Horizontal">
-                                <TextBox x:Name="LightweightOffsetXBox" Text="5" Width="50" Margin="0,0,5,0"/>
-                                <TextBox x:Name="LightweightOffsetYBox" Text="5" Width="50"/>
-                            </StackPanel>
+                            <CheckBox x:Name="AutoFlipCheckBox" Content="Auto‑flip" IsChecked="True" Margin="0,5"/>
                         </StackPanel>
                     </GroupBox>
 
-                    <!-- Animation Settings (updated slide names) -->
+                    <!-- Animation Settings -->
                     <GroupBox Header="Animation Settings" Margin="0,5">
                         <StackPanel Margin="5">
                             <TextBlock Text="Enter Animation:" Margin="0,5,0,0"/>

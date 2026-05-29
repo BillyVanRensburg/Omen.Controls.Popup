@@ -17,13 +17,11 @@ public static partial class PositionCalculator
         double x = position.X;
         double y = position.Y;
 
-        // Horizontal flip (if popup exceeds right edge, align to right edge; if left edge, align to left)
         if (x + popupSize.Width > containerBounds.Right)
             x = containerBounds.Right - popupSize.Width;
         if (x < containerBounds.Left)
             x = containerBounds.Left;
 
-        // Vertical flip
         if (y + popupSize.Height > containerBounds.Bottom)
             y = containerBounds.Bottom - popupSize.Height;
         if (y < containerBounds.Top)

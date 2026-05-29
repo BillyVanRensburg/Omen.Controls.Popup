@@ -1,12 +1,10 @@
-﻿using System;
-using System.Windows;
-using System.Windows.Controls;
+﻿using System.Windows;
 using System.Windows.Input;
 
 namespace Omen.Controls.Popup.WPF.Controls;
 
 /// <summary>
-/// Partial class containing the constructor, loaded event, and basic UI event handlers.
+/// Partial class containing the constructor and basic event handlers.
 /// </summary>
 public partial class OmenPopup
 {
@@ -25,7 +23,7 @@ public partial class OmenPopup
 
     private void OverlayGrid_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        if (IsOpen && CloseOnOverlayClick)
+        if (IsOpen && CloseOnOutsideClick)
             _ = CloseAsync();
     }
 
