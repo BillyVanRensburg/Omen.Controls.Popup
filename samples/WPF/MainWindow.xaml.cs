@@ -19,6 +19,10 @@ namespace Omen.Controls.Popup.Sample
             AnchorTargetCombo.SelectionChanged += AnchorTargetCombo_SelectionChanged;
             OverlayBrushCombo.SelectionChanged += OverlayBrushCombo_SelectionChanged;
 
+            // Set default anchor element selection (Left UI Element)
+            if (AnchorElementCombo.Items.Count > 0)
+                AnchorElementCombo.SelectedIndex = 0;
+
             if (TestPopup != null)
                 TestPopup.Closed += (s, e) => StatusText.Text = "Popup closed at " + DateTime.Now.ToLongTimeString();
 
@@ -61,7 +65,10 @@ namespace Omen.Controls.Popup.Sample
                 if (TestPopup.AnchorTarget == CoreEnums.AnchorTarget.UiElement)
                 {
                     var selected = AnchorElementCombo.SelectedItem as ComboBoxItem;
-                    TestPopup.AnchorElement = selected?.Tag as FrameworkElement ?? ShowButton;
+                    if (selected?.Tag is FrameworkElement element)
+                        TestPopup.AnchorElement = element;
+                    else
+                        TestPopup.AnchorElement = LeftElement; // fallback to Left UI Element
                 }
                 else
                 {

@@ -33,7 +33,7 @@
                         </StackPanel>
                     </GroupBox>
 
-                    <!-- Popup Options (unified) -->
+                    <!-- Popup Options -->
                     <GroupBox Header="Popup Options" Margin="0,5">
                         <StackPanel Margin="5">
                             <CheckBox x:Name="AsyncCheckBox" Content="Use Async (await)" IsChecked="True" Margin="0,3"/>
@@ -50,7 +50,7 @@
                         </StackPanel>
                     </GroupBox>
 
-                    <!-- Overlay Brush (Modal only) -->
+                    <!-- Overlay Brush (Modal) -->
                     <GroupBox Header="Overlay Brush (Modal)" Margin="0,5">
                         <StackPanel Margin="5">
                             <ComboBox x:Name="OverlayBrushCombo" Width="150" SelectedIndex="0">
@@ -64,11 +64,27 @@
                             </StackPanel>
                         </StackPanel>
                     </GroupBox>
+
+                    <!-- Anchor Elements (for UI Element anchor) -->
+                    <GroupBox Header="Anchor Elements (for UI Element anchor)" Margin="0,5">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border x:Name="LeftElement" Grid.Column="0" Background="LightBlue" BorderBrush="Blue" BorderThickness="1" Margin="2" Height="300" VerticalAlignment="Stretch">
+                                <TextBlock Text="Left UI Element" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16" FontWeight="Bold"/>
+                            </Border>
+                            <Border x:Name="RightElement" Grid.Column="1" Background="LightGreen" BorderBrush="Green" BorderThickness="1" Margin="2" Height="300" VerticalAlignment="Stretch">
+                                <TextBlock Text="Right UI Element" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16" FontWeight="Bold"/>
+                            </Border>
+                        </Grid>
+                    </GroupBox>
                 </StackPanel>
 
                 <!-- Column 2 -->
                 <StackPanel Grid.Column="1" Margin="10,0,0,0">
-                    <!-- Positioning (common for modal and lightweight) -->
+                    <!-- Positioning (common) -->
                     <GroupBox Header="Positioning" Margin="0,5">
                         <StackPanel Margin="5">
                             <TextBlock Text="Anchor Target:" Margin="0,5,0,0"/>
@@ -82,7 +98,8 @@
                             <StackPanel x:Name="AnchorElementPanel" Visibility="Collapsed">
                                 <TextBlock Text="Anchor Element:" Margin="0,5,0,0"/>
                                 <ComboBox x:Name="AnchorElementCombo" Width="150">
-                                    <ComboBoxItem Content="Show Button" Tag="{Binding ElementName=ShowButton}"/>
+                                    <ComboBoxItem Content="Left UI Element" Tag="{Binding ElementName=LeftElement}"/>
+                                    <ComboBoxItem Content="Right UI Element" Tag="{Binding ElementName=RightElement}"/>
                                 </ComboBox>
                             </StackPanel>
 
@@ -182,6 +199,7 @@
             <Button x:Name="CloseButton" Content="Force Close" Click="CloseButton_Click" Width="120" Height="30" Margin="5"/>
         </StackPanel>
 
+        <!-- OmenPopup control -->
         <omen:OmenPopup x:Name="TestPopup" />
     </Grid>
 </Window>
