@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="LICENSE" />
+    <None Include="LICENSE" />
   </ItemGroup>
 
   <ItemGroup>

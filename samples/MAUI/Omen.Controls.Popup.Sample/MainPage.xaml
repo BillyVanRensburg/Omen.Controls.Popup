@@ -1,0 +1,78 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:popup="clr-namespace:Omen.Controls.Popup.MAUI.Controls;assembly=Omen.Controls.Popup.MAUI"
+             x:Class="Omen.Controls.Popup.Sample.MainPage"
+             Title="OmenPopup Demo">
+
+    <Grid RowDefinitions="*,Auto" Padding="15" RowSpacing="10">
+        <!-- Demo Content -->
+        <ScrollView Grid.Row="0">
+            <VerticalStackLayout Spacing="15">
+                <!-- Mode Selection -->
+                <VerticalStackLayout Spacing="8" Padding="10" BackgroundColor="#F0F0F0">
+                    <Label Text="Mode" FontAttributes="Bold" FontSize="16" />
+                    <RadioButton x:Name="ModalRadio" Content="Modal (overlay)" IsChecked="True" />
+                    <RadioButton x:Name="LightweightRadio" Content="Lightweight (floating)" />
+                </VerticalStackLayout>
+
+                <!-- Popup Options -->
+                <VerticalStackLayout Spacing="8" Padding="10" BackgroundColor="#F0F0F0">
+                    <Label Text="Popup Options" FontAttributes="Bold" FontSize="16" />
+                    <HorizontalStackLayout Spacing="10">
+                        <CheckBox x:Name="CloseOnOutsideClickCheckBox" IsChecked="True" />
+                        <Label Text="Close on outside click" VerticalOptions="Center" />
+                    </HorizontalStackLayout>
+                    <HorizontalStackLayout Spacing="10">
+                        <CheckBox x:Name="ShowCloseButtonCheckBox" IsChecked="True" />
+                        <Label Text="Show Close Button" VerticalOptions="Center" />
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
+
+                <!-- Animation Options -->
+                <VerticalStackLayout Spacing="8" Padding="10" BackgroundColor="#F0F0F0">
+                    <Label Text="Animation Duration (ms)" FontAttributes="Bold" FontSize="16" />
+                    <Slider x:Name="DurationSlider" Minimum="100" Maximum="1000" Value="300" />
+                    <Label x:Name="DurationLabel" Text="300 ms" FontSize="12" TextColor="Gray" />
+                </VerticalStackLayout>
+
+                <!-- Overlay Brush -->
+                <VerticalStackLayout Spacing="8" Padding="10" BackgroundColor="#F0F0F0">
+                    <Label Text="Overlay Brush" FontAttributes="Bold" FontSize="16" />
+                    <Picker x:Name="OverlayBrushPicker" Title="Select Overlay" SelectedIndex="0">
+                        <Picker.ItemsSource>
+                            <x:Array Type="{x:Type x:String}">
+                                <x:String>Black 50%</x:String>
+                                <x:String>Black 70%</x:String>
+                                <x:String>Blue Tint</x:String>
+                            </x:Array>
+                        </Picker.ItemsSource>
+                    </Picker>
+                </VerticalStackLayout>
+
+                <!-- Content Type Selection -->
+                <VerticalStackLayout Spacing="8" Padding="10" BackgroundColor="#F0F0F0">
+                    <Label Text="Content Type" FontAttributes="Bold" FontSize="16" />
+                    <RadioButton x:Name="SimpleTextRadio" Content="Simple Text" IsChecked="True" GroupName="ContentType" />
+                    <RadioButton x:Name="RichContentRadio" Content="Rich Content" GroupName="ContentType" />
+                </VerticalStackLayout>
+
+                <!-- Demo Buttons -->
+                <VerticalStackLayout Spacing="10" Padding="0,10">
+                    <Button x:Name="ShowPopupBtn" Text="Show Popup" Clicked="OnShowPopupClicked" BackgroundColor="#512BD4" TextColor="White" Padding="10" />
+                    <Button x:Name="CounterBtn" Text="Click me (0 times)" Clicked="OnCounterClicked" BackgroundColor="#2196F3" TextColor="White" Padding="10" />
+                </VerticalStackLayout>
+
+                <!-- Status -->
+                <Label x:Name="StatusLabel" Text="Ready" FontSize="12" TextColor="Gray" HorizontalTextAlignment="Center" />
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Footer -->
+        <Label Grid.Row="1" Text="OmenPopup for .NET MAUI" HorizontalTextAlignment="Center" FontSize="12" TextColor="Gray" />
+
+        <!-- Popup Control -->
+        <popup:OmenPopup x:Name="myPopup" />
+    </Grid>
+
+</ContentPage>

@@ -1,5 +1,8 @@
 <Solution>
   <Folder Name="/samples/" />
+  <Folder Name="/samples/MAUI/">
+    <Project Path="samples/MAUI/Omen.Controls.Popup.Sample/Omen.Controls.Popup.Sample.csproj" Id="ee4cdaec-49af-4262-bcb7-f4103e7f774d" />
+  </Folder>
   <Folder Name="/samples/WPF/">
     <Project Path="samples/WPF/Omen.Controls.Popup.Sample.csproj" />
   </Folder>
@@ -15,6 +18,9 @@
   </Folder>
   <Folder Name="/src/Core/">
     <Project Path="src/Core/Omen.Controls.Popup.Core.csproj" />
+  </Folder>
+  <Folder Name="/src/MAUI/">
+    <Project Path="src/MAUI/Omen.Controls.Popup.MAUI/Omen.Controls.Popup.MAUI.csproj" Id="619bd3d8-12ec-494a-aff9-7e47491a1aa0" />
   </Folder>
   <Folder Name="/src/WPF/">
     <Project Path="src/WPF/Omen.Controls.Popup.WPF.csproj" />

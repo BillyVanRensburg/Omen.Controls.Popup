@@ -20,6 +20,12 @@ public partial class PopupRequest
     public PopupAlignment Alignment { get; set; } = PopupAlignment.BottomCenter;
 
     /// <summary>
+    /// Gets or sets the anchor element reference. This is typed as object to avoid
+    /// platform-specific UI type dependencies; hosts can cast to native view types as needed.
+    /// </summary>
+    public object? AnchorElement { get; set; }
+
+    /// <summary>
     /// Gets or sets the offset in pixels (X, Y) from the anchor point.
     /// </summary>
     public (int X, int Y) Offset { get; set; }
