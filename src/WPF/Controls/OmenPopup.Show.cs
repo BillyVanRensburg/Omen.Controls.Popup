@@ -327,7 +327,6 @@ public partial class OmenPopup
         grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
 
-        // Add the close button if requested.
         if (ShowCloseButton)
         {
             var closeButton = new Button
@@ -345,7 +344,6 @@ public partial class OmenPopup
             grid.Children.Add(closeButton);
         }
 
-        // Add the user's content.
         var contentPresenter = new ContentPresenter
         {
             Content = this.Content,
@@ -356,6 +354,20 @@ public partial class OmenPopup
 
         border.Child = grid;
         _lightweightContentHost = border;
+        _lightweightContentHost.InvalidateMeasure();
+        _lightweightContentHost.InvalidateArrange();
+        await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Loaded);
+
+        // --- Force layout to ensure the content is measured ---
+        // Measure with infinite size
+        _lightweightContentHost.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        // Arrange with the desired size
+        double desiredWidth = _lightweightContentHost.DesiredSize.Width;
+        double desiredHeight = _lightweightContentHost.DesiredSize.Height;
+        if (desiredWidth <= 0) desiredWidth = 200;
+        if (desiredHeight <= 0) desiredHeight = 100;
+        _lightweightContentHost.Arrange(new Rect(0, 0, desiredWidth, desiredHeight));
+        _lightweightContentHost.UpdateLayout();
 
         // Set initial animation states.
         if ((EnterAnimation & CoreEnums.AnimationType.Fade) != 0)
@@ -369,7 +381,6 @@ public partial class OmenPopup
             scale.ScaleX = scale.ScaleY = 0.8;
         }
 
-        // Compute slide start offsets based on the desired size.
         double startX = 0, startY = 0;
         var size = MeasureContentSize(_lightweightContentHost);
         if ((EnterAnimation & CoreEnums.AnimationType.SlideLeft) != 0)
@@ -384,6 +395,7 @@ public partial class OmenPopup
         translate.X = startX;
         translate.Y = startY;
 
+        // Ensure the popup has a known size (for positioning calculations).
         await EnsureTargetHasSize(_lightweightContentHost);
         double popupWidth = _lightweightContentHost.ActualWidth;
         double popupHeight = _lightweightContentHost.ActualHeight;
@@ -392,7 +404,7 @@ public partial class OmenPopup
         if (popupWidth <= 0) popupWidth = 200;
         if (popupHeight <= 0) popupHeight = 100;
 
-        // Obtain screen coordinates (the lightweight popup uses screen coordinates directly).
+        // Obtain screen coordinates.
         var screenPos = await GetPositionInScreenCoordinates(popupWidth, popupHeight);
 
         _lightweightPopup = new WpfPopup

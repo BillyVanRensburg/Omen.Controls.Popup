@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 using CoreEnums = Omen.Controls.Popup.Core.Enums;
 
 namespace Omen.Controls.Popup.Sample
@@ -19,7 +20,6 @@ namespace Omen.Controls.Popup.Sample
             AnchorTargetCombo.SelectionChanged += AnchorTargetCombo_SelectionChanged;
             OverlayBrushCombo.SelectionChanged += OverlayBrushCombo_SelectionChanged;
 
-            // Set default anchor element selection (Left UI Element)
             if (AnchorElementCombo.Items.Count > 0)
                 AnchorElementCombo.SelectedIndex = 0;
 
@@ -55,6 +55,13 @@ namespace Omen.Controls.Popup.Sample
             {
                 if (TestPopup == null) return;
 
+                // Ensure any previously open popup is closed before we reconfigure
+                if (TestPopup.IsOpen)
+                    await TestPopup.CloseAsync();
+
+                // Small delay to allow clean-up (helps with layout)
+                await Task.Delay(50);
+
                 bool isModal = ModalRadio.IsChecked == true;
                 TestPopup.IsModal = isModal;
 
@@ -68,7 +75,7 @@ namespace Omen.Controls.Popup.Sample
                     if (selected?.Tag is FrameworkElement element)
                         TestPopup.AnchorElement = element;
                     else
-                        TestPopup.AnchorElement = LeftElement; // fallback to Left UI Element
+                        TestPopup.AnchorElement = LeftElement;
                 }
                 else
                 {
@@ -93,11 +100,9 @@ namespace Omen.Controls.Popup.Sample
 
                 TestPopup.AutoFlip = AutoFlipCheckBox.IsChecked == true;
 
-                // Popup options
                 TestPopup.CloseOnOutsideClick = CloseOnOutsideClickCheckBox.IsChecked == true;
                 TestPopup.CanCloseOnEscape = EscapeCheckBox.IsChecked == true;
 
-                // Close button options
                 TestPopup.ShowCloseButton = ShowCloseButtonCheckBox.IsChecked == true;
                 if (CustomCloseButtonCheckBox.IsChecked == true)
                 {
@@ -109,14 +114,12 @@ namespace Omen.Controls.Popup.Sample
                     TestPopup.CloseButtonTemplate = null;
                 }
 
-                // Overlay brush (modal only)
                 var selectedOverlay = ((ComboBoxItem)OverlayBrushCombo.SelectedItem)?.Tag as string;
                 if (selectedOverlay == "Custom")
                     TestPopup.OverlayBrush = (Brush)new BrushConverter().ConvertFromString(CustomOverlayBrushBox.Text);
                 else
                     TestPopup.OverlayBrush = (Brush)new BrushConverter().ConvertFromString(selectedOverlay ?? "#80000000");
 
-                // Animation settings
                 string enterTag = (EnterAnimationCombo?.SelectedItem as ComboBoxItem)?.Tag as string ?? "None";
                 string exitTag = (ExitAnimationCombo?.SelectedItem as ComboBoxItem)?.Tag as string ?? "None";
                 TestPopup.EnterAnimation = ParseAnimation(enterTag);
@@ -130,11 +133,18 @@ namespace Omen.Controls.Popup.Sample
                 TestPopup.EnterEasing = ParseEasing(easingTag);
                 TestPopup.ExitEasing = ParseEasing(easingTag);
 
-                // Content
-                if (DialogContentRadio?.IsChecked == true)
+                // Content – always create a fresh instance for dialog
+                if (DialogContentRadio.IsChecked == true)
+                {
+                    // Clear old content and force layout to avoid reuse issues
+                    TestPopup.Content = null;
+                    await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Loaded);
                     TestPopup.Content = new DialogContent();
+                }
                 else
+                {
                     TestPopup.Content = TextContentBox?.Text ?? string.Empty;
+                }
 
                 bool useAsync = AsyncCheckBox?.IsChecked == true;
                 StatusText.Text = "Showing popup... (using " + (useAsync ? "async/await" : "fire-and-forget") + ")";
