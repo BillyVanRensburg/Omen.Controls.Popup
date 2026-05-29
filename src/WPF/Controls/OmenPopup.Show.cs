@@ -156,6 +156,7 @@ public partial class OmenPopup
     /// <remarks>
     /// This method also handles the initial transform states for the enter animation (fade, scale, slide)
     /// and ensures the overlay is visible before the animation starts.
+    /// Focus is trapped inside the popup: the previous focused element is stored and focus is moved to the popup.
     /// </remarks>
     private async Task ShowModalAsync()
     {
@@ -282,11 +283,15 @@ public partial class OmenPopup
         OverlayGrid.Visibility = Visibility.Visible;
         await Dispatcher.InvokeAsync(() => ModalContentBorder.UpdateLayout(), DispatcherPriority.Render);
 
-        // Mark as open, take focus, and run the enter animation.
+        // Mark as open and trap focus.
         IsOpen = true;
         Focusable = true;
-        Focus();
 
+        // Store the currently focused element and move focus to the popup content.
+        _previousFocus = Keyboard.FocusedElement;
+        ModalContentBorder.Focus();
+
+        // Run the enter animation.
         await EnsureTargetHasSize(ModalContentBorder);
         await AnimateEnterAsync(ModalContentBorder, EnterAnimation, EnterDuration, EnterEasing);
     }
@@ -303,6 +308,7 @@ public partial class OmenPopup
     /// <remarks>
     /// The popup can be anchored to a UI element, the mouse cursor, the parent container, or custom coordinates.
     /// The <see cref="CloseOnOutsideClick"/> property controls whether clicking outside closes the popup.
+    /// Focus is also trapped inside the lightweight popup content.
     /// </remarks>
     private async Task ShowLightweightAsync()
     {
@@ -354,14 +360,13 @@ public partial class OmenPopup
 
         border.Child = grid;
         _lightweightContentHost = border;
+        _lightweightContentHost.Focusable = true;
         _lightweightContentHost.InvalidateMeasure();
         _lightweightContentHost.InvalidateArrange();
         await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Loaded);
 
-        // --- Force layout to ensure the content is measured ---
-        // Measure with infinite size
+        // Force layout to ensure the content is measured.
         _lightweightContentHost.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-        // Arrange with the desired size
         double desiredWidth = _lightweightContentHost.DesiredSize.Width;
         double desiredHeight = _lightweightContentHost.DesiredSize.Height;
         if (desiredWidth <= 0) desiredWidth = 200;
@@ -418,10 +423,51 @@ public partial class OmenPopup
         };
 
         _lightweightPopup.Closed += (s, e) => _ = CloseAsync();
+
+        // Focus trapping for lightweight
+        _previousFocus = Keyboard.FocusedElement;
+        _lightweightContentHost.Focus();
+        _lightweightContentHost.PreviewLostKeyboardFocus += OnLightweightPreviewLostKeyboardFocus;
+
         _lightweightPopup.IsOpen = true;
         IsOpen = true;
 
         // Run the enter animation.
         await AnimateEnterAsync(_lightweightContentHost, EnterAnimation, EnterDuration, EnterEasing);
+    }
+
+    // ------------------------------------------------------------------------
+    // Lightweight focus trapping helpers
+    // ------------------------------------------------------------------------
+
+    /// <summary>
+    /// Prevents keyboard focus from leaving the lightweight popup when it is open.
+    /// </summary>
+    private void OnLightweightPreviewLostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+    {
+        if (!IsModal && IsOpen && _lightweightContentHost != null)
+        {
+            if (!IsChildOfLightweightPopup(e.NewFocus))
+            {
+                _lightweightContentHost.Focus();
+                e.Handled = true;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Determines whether a given element is a descendant of the lightweight popup content.
+    /// </summary>
+    private bool IsChildOfLightweightPopup(IInputElement? element)
+    {
+        if (element == null) return false;
+        var fe = element as FrameworkElement;
+        while (fe != null)
+        {
+            if (fe == _lightweightContentHost)
+                return true;
+            fe = VisualTreeHelper.GetParent(fe) as FrameworkElement;
+        }
+        return false;
     }
 }

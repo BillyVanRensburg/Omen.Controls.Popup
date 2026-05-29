@@ -16,7 +16,8 @@ public partial class OmenPopup
     public event EventHandler? Closed;
 
     /// <summary>
-    /// Closes the popup asynchronously.
+    /// Closes the popup asynchronously. For modal popups, restores focus to the previously focused element.
+    /// For lightweight popups, also detaches the focus trapping handler before restoring focus.
     /// </summary>
     public async Task CloseAsync()
     {
@@ -30,23 +31,40 @@ public partial class OmenPopup
             ModalContentBorder.HorizontalAlignment = HorizontalAlignment.Center;
             ModalContentBorder.VerticalAlignment = VerticalAlignment.Center;
             OverlayGrid.Visibility = Visibility.Collapsed;
+
+            // Restore previous focus (modal)
+            if (_previousFocus != null && _previousFocus is FrameworkElement fe && fe.IsVisible && fe.IsEnabled)
+                fe.Focus();
+            _previousFocus = null;
         }
         else
         {
             if (_lightweightContentHost != null)
+            {
                 await AnimateExitAsync(_lightweightContentHost, ExitAnimation, ExitDuration, ExitEasing);
+                // Detach focus trapping handler for lightweight popup
+                _lightweightContentHost.PreviewLostKeyboardFocus -= OnLightweightPreviewLostKeyboardFocus;
+            }
             if (_lightweightPopup != null)
             {
                 _lightweightPopup.IsOpen = false;
                 _lightweightPopup = null;
             }
             _lightweightContentHost = null;
+
+            // Restore previous focus (lightweight)
+            if (_previousFocus != null && _previousFocus is FrameworkElement fe && fe.IsVisible && fe.IsEnabled)
+                fe.Focus();
+            _previousFocus = null;
         }
         IsOpen = false;
         Closed?.Invoke(this, EventArgs.Empty);
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Handles the Escape key to close the popup if <see cref="CanCloseOnEscape"/> is <c>true</c>.
+    /// </summary>
+    /// <param name="e">Key event arguments.</param>
     protected override void OnPreviewKeyDown(KeyEventArgs e)
     {
         if (e.Key == Key.Escape && IsOpen && CanCloseOnEscape)
